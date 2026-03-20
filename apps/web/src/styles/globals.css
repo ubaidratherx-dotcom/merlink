@@ -1,0 +1,155 @@
+/* Mercury Design System v2.0 — Global Styles */
+
+:root {
+  /* Aurora Brand Gradient */
+  --aurora-start: #7B5EFF;
+  --aurora-end: #3BBFFF;
+  --aurora-gradient: linear-gradient(135deg, #7B5EFF 0%, #3BBFFF 100%);
+  --aurora-tint: #EDE9FF;
+
+  /* Light Mode (Default) */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F5F7;
+  --bg-tertiary: #EFEFEF;
+  --surface-card: #FFFFFF;
+
+  --text-primary: #0B0B0C;
+  --text-secondary: #3C3C43;
+  --text-tertiary: #8E8E93;
+  --text-link: #7B5EFF;
+
+  /* Semantic */
+  --signal-green: #16C784;
+  --alert-red: #FF453A;
+  --warning-amber: #FF9F0A;
+
+  /* Border & Divider */
+  --border: #E5E5EA;
+  --divider: #F2F2F7;
+
+  /* Badge Backgrounds */
+  --kyc-verified-bg: #E8FBF3;
+  --in-person-bg: #EDE9FF;
+  --remote-bg: #F5F5F7;
+  --dispute-bg: #FFF0EF;
+  --danger-bg: #FFF0EF;
+
+  /* Shadows */
+  --shadow-card: 0px 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0px 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-primary-btn: 0px 8px 24px rgba(123, 94, 255, 0.22);
+  --shadow-frosted: 0px 20px 60px rgba(0, 0, 0, 0.12);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', 'Roboto Mono', 'Fira Code', monospace;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-base: 16px;
+  --space-lg: 20px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0B0B0C;
+    --bg-secondary: #1C1C1E;
+    --bg-tertiary: #2C2C2E;
+    --surface-card: #1C1C1E;
+
+    --text-primary: #F2F2F7;
+    --text-secondary: #AEAEB2;
+    --text-tertiary: #636366;
+
+    --border: rgba(255, 255, 255, 0.12);
+    --divider: rgba(255, 255, 255, 0.06);
+
+    --shadow-card: 0px 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0px 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-primary-btn: 0px 4px 16px rgba(123, 94, 255, 0.40);
+  }
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 24px;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  min-height: 100dvh;
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Utility: Aurora gradient text */
+.aurora-text {
+  background: var(--aurora-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Utility: Aurora gradient background */
+.aurora-bg {
+  background: var(--aurora-gradient);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}

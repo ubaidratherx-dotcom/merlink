@@ -1,0 +1,371 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User & Auth ─────────────────────────────────────────────
+
+enum AuthProvider {
+  PHONE
+  EMAIL
+}
+
+enum AccountStatus {
+  UNVERIFIED
+  PHONE_VERIFIED
+}
+
+enum KycStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id            String        @id @default(cuid())
+  username      String        @unique
+  email         String?       @unique
+  phone         String?       @unique
+  passwordHash  String?
+  profilePhoto  String?
+  authProvider  AuthProvider
+  accountStatus AccountStatus @default(UNVERIFIED)
+  kycStatus     KycStatus     @default(UNVERIFIED)
+  walletAddress String?       @unique
+  walletVerified Boolean      @default(false)
+  sellerMode    Boolean       @default(false)
+  latitude      Float?
+  longitude     Float?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  listings      Listing[]
+  buyRequests   BuyRequest[]
+  tradesAsBuyer  Trade[]      @relation("BuyerTrades")
+  tradesAsSeller Trade[]      @relation("SellerTrades")
+  chatMessages  ChatMessage[]
+  reviewsGiven  Review[]     @relation("ReviewsGiven")
+  reviewsReceived Review[]   @relation("ReviewsReceived")
+  disputesInitiated Dispute[] @relation("DisputeInitiator")
+  disputesResolved  Dispute[] @relation("DisputeResolver")
+  videoVerifications VideoVerification[]
+  tradeStateLogs    TradeStateLog[]
+  refreshTokens      RefreshToken[]
+  otpCodes           OtpCode[]
+  kycApplication     KycApplication?
+  emailVerifications EmailVerification[]
+  passwordResets     PasswordReset[]
+
+  @@index([latitude, longitude])
+  @@index([kycStatus])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  phone     String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@index([userId])
+  @@map("otp_codes")
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("password_resets")
+}
+
+// ─── Listings ────────────────────────────────────────────────
+
+enum SupportedAsset {
+  USDC
+  SOL
+}
+
+enum PriceType {
+  FIXED
+  MARKET_PLUS
+  MARKET_MINUS
+}
+
+enum TradeTypeAllowed {
+  IN_PERSON
+  REMOTE
+  BOTH
+}
+
+enum PaymentMethodEnum {
+  BANK_TRANSFER
+  CASH
+  WISE
+  REVOLUT
+  MOBILE_MONEY
+  PAYPAL
+  OTHER
+}
+
+model Listing {
+  id               String           @id @default(cuid())
+  sellerId         String
+  seller           User             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  asset            SupportedAsset
+  priceType        PriceType        @default(FIXED)
+  priceValue       Float
+  minAmount        Float
+  maxAmount        Float
+  paymentMethods   PaymentMethodEnum[]
+  tradeType        TradeTypeAllowed
+  availableLiquidity Float?
+  isActive         Boolean          @default(true)
+  latitude         Float?
+  longitude        Float?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  trades           Trade[]
+
+  @@index([sellerId])
+  @@index([asset])
+  @@index([isActive])
+  @@index([latitude, longitude])
+  @@map("listings")
+}
+
+// ─── Buy Requests ────────────────────────────────────────────
+
+model BuyRequest {
+  id            String           @id @default(cuid())
+  buyerId       String
+  buyer         User             @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  asset         SupportedAsset
+  amount        Float
+  paymentMethod PaymentMethodEnum
+  latitude      Float
+  longitude     Float
+  expiresAt     DateTime
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+
+  trades        Trade[]
+
+  @@index([buyerId])
+  @@index([asset])
+  @@index([isActive])
+  @@index([expiresAt])
+  @@index([latitude, longitude])
+  @@map("buy_requests")
+}
+
+// ─── Trades ──────────────────────────────────────────────────
+
+enum TradeStatus {
+  CREATED
+  ESCROW_LOCKED
+  PAYMENT_PENDING
+  PAYMENT_MARKED_SENT
+  RELEASE_PENDING
+  COMPLETED
+  CANCELLED
+  DISPUTED
+  RESOLVED
+}
+
+enum TradeType {
+  IN_PERSON
+  REMOTE
+}
+
+model Trade {
+  id                   String        @id @default(cuid())
+  buyerId              String
+  buyer                User          @relation("BuyerTrades", fields: [buyerId], references: [id])
+  sellerId             String
+  seller               User          @relation("SellerTrades", fields: [sellerId], references: [id])
+  listingId            String?
+  listing              Listing?      @relation(fields: [listingId], references: [id])
+  buyRequestId         String?
+  buyRequest           BuyRequest?   @relation(fields: [buyRequestId], references: [id])
+  asset                SupportedAsset
+  amount               Float
+  price                Float
+  paymentMethod        PaymentMethodEnum
+  tradeType            TradeType
+  status               TradeStatus   @default(CREATED)
+  escrowAddress        String?
+  escrowTxSignature    String?
+  releaseTxSignature   String?
+  protocolFee          Float         @default(0)
+  paymentDeadline      DateTime?
+  confirmationDeadline DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  // Relations
+  stateLogs            TradeStateLog[]
+  chatMessages         ChatMessage[]
+  reviews              Review[]
+  videoVerifications   VideoVerification[]
+  dispute              Dispute?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("trades")
+}
+
+model TradeStateLog {
+  id         String       @id @default(cuid())
+  tradeId    String
+  trade      Trade        @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  fromStatus TradeStatus?
+  toStatus   TradeStatus
+  changedBy  String
+  user       User         @relation(fields: [changedBy], references: [id])
+  reason     String?
+  createdAt  DateTime     @default(now())
+
+  @@index([tradeId])
+  @@map("trade_state_logs")
+}
+
+// ─── Chat ────────────────────────────────────────────────────
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  tradeId     String
+  trade       Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation(fields: [senderId], references: [id])
+  content     String
+  isBlocked   Boolean  @default(false)
+  blockReason String?
+  createdAt   DateTime @default(now())
+
+  @@index([tradeId])
+  @@index([senderId])
+  @@map("chat_messages")
+}
+
+// ─── Reviews ─────────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid())
+  tradeId    String
+  trade      Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId String
+  reviewee   User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  rating     Int      // 1-5
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  @@unique([tradeId, reviewerId])
+  @@index([revieweeId])
+  @@map("reviews")
+}
+
+// ─── Video Verification ─────────────────────────────────────
+
+model VideoVerification {
+  id           String   @id @default(cuid())
+  tradeId      String
+  trade        Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  videoUrl     String
+  gpsLatitude  Float
+  gpsLongitude Float
+  deviceId     String
+  createdAt    DateTime @default(now())
+
+  @@index([tradeId])
+  @@map("video_verifications")
+}
+
+// ─── Disputes ────────────────────────────────────────────────
+
+enum DisputeResolution {
+  RELEASE_TO_BUYER
+  REFUND_TO_SELLER
+}
+
+model Dispute {
+  id          String             @id @default(cuid())
+  tradeId     String             @unique
+  trade       Trade              @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  initiatedBy String
+  initiator   User               @relation("DisputeInitiator", fields: [initiatedBy], references: [id])
+  reason      String
+  resolution  DisputeResolution?
+  resolvedBy  String?
+  resolver    User?              @relation("DisputeResolver", fields: [resolvedBy], references: [id])
+  resolvedAt  DateTime?
+  createdAt   DateTime           @default(now())
+
+  @@index([initiatedBy])
+  @@map("disputes")
+}
+
+// ─── KYC ──────────────────────────────────────────────────
+
+model KycApplication {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicantId   String?  // Sumsub applicant ID
+  levelName     String   @default("basic-kyc-level")
+  reviewStatus  String?  // GREEN, RED, etc.
+  reviewComment String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("kyc_applications")
+}

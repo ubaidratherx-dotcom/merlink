@@ -1,0 +1,644 @@
+.container {
+  padding: var(--space-lg);
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+/* Error Wrapper */
+.errorWrapper {
+  width: 100%;
+}
+
+/* Location Banner */
+.locationBanner {
+  width: 100%;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  animation: slideDown 300ms ease;
+}
+
+.locationBannerIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--aurora-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* KYC Banner */
+.kycBanner {
+  width: 100%;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  animation: slideDown 300ms ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kycBannerPending {
+  border-color: rgba(255, 159, 10, 0.2);
+}
+
+.kycBannerContent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kycBannerIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--aurora-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kycBannerIconPending {
+  background: #FFF3E0;
+}
+
+.kycBannerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.kycBannerTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.kycBannerSubtitle {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.kycBannerButton {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 20px;
+  background: var(--aurora-gradient);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-primary-btn);
+  transition: all 150ms ease;
+  text-decoration: none;
+}
+
+.kycBannerButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0px 12px 32px rgba(123, 94, 255, 0.3);
+  color: #ffffff;
+}
+
+.kycBannerButton:active {
+  transform: translateY(0);
+}
+
+.kycBannerButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* KYC Status Badge */
+.kycStatusBadge {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.kycStatusBadgePending {
+  background: #FFF3E0;
+  color: var(--warning-amber);
+}
+
+/* KYC Verified Inline Badge */
+.kycVerifiedInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--kyc-verified-bg);
+  color: var(--signal-green);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+}
+
+/* Search / Filter Bar */
+.searchBar {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.searchInputWrapper {
+  flex: 1;
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px 0 44px;
+  background: #F5F5F7;
+  border: 1px solid #E5E5EA;
+  border-radius: 14px;
+  font-size: 15px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.searchInput:focus {
+  border-color: #7B5EFF;
+  border-width: 2px;
+  background: #FFFFFF;
+}
+
+.filterButton {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  transition: background 150ms ease;
+  flex-shrink: 0;
+}
+
+.filterButton:hover {
+  background: var(--bg-tertiary);
+}
+
+/* Toggle Tabs (Sellers / Buyers) */
+.toggleTabs {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  gap: 0;
+}
+
+.toggleTab {
+  flex: 1;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-full);
+  transition: all 200ms ease;
+}
+
+.toggleTabActive {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Refresh Control */
+.refreshControl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  transition: color 150ms ease;
+}
+
+.refreshControl:hover {
+  color: var(--text-secondary);
+}
+
+.refreshControl:disabled {
+  opacity: 0.5;
+}
+
+/* Listing Cards */
+.listingCardList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.listingCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  transition: box-shadow 200ms ease;
+}
+
+.listingCard:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.listingCardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* Seller Avatar */
+.sellerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--aurora-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sellerAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sellerAvatarInitials {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.sellerInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sellerName {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.listingMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Asset Badge */
+.assetBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.assetBadgeUsdc {
+  background: #E8F5FE;
+  color: #2775CA;
+}
+
+.assetBadgeSol {
+  background: #F3EEFF;
+  color: #9945FF;
+}
+
+/* Trade Type Badge */
+.tradeTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tradeTypeInPerson {
+  background: var(--in-person-bg);
+  color: var(--aurora-start);
+}
+
+.tradeTypeRemote {
+  background: var(--remote-bg);
+  color: var(--text-secondary);
+}
+
+.tradeTypeBoth {
+  background: var(--aurora-tint);
+  color: var(--aurora-start);
+}
+
+/* Listing Price Row */
+.listingPriceRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.listingPrice {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.listingRange {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* Payment Chips */
+.listingPayments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.paymentChip {
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Listing Footer */
+.listingFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--divider);
+}
+
+.liquidityText {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.liquidityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal-green);
+  flex-shrink: 0;
+}
+
+.tradeButton {
+  height: 40px;
+  padding: 0 24px;
+  background: var(--aurora-gradient);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-primary-btn);
+  transition: all 150ms ease;
+  text-decoration: none;
+}
+
+.tradeButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0px 12px 32px rgba(123, 94, 255, 0.3);
+  color: #ffffff;
+}
+
+.tradeButton:active {
+  transform: translateY(0);
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-4xl) var(--space-lg);
+  gap: var(--space-base);
+}
+
+.emptyIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-sm);
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.emptySubtitle {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+/* Skeleton Cards */
+.skeletonCardList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skeletonCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skeletonCardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.skeletonAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.skeletonLine {
+  height: 14px;
+  border-radius: 7px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  position: relative;
+}
+
+.skeletonLineShort {
+  width: 40%;
+}
+
+.skeletonLineMedium {
+  width: 65%;
+}
+
+.skeletonLineLong {
+  width: 85%;
+}
+
+.skeletonPills {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.skeletonPill {
+  width: 80px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  overflow: hidden;
+  position: relative;
+}
+
+.skeletonButton {
+  width: 100%;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Shimmer animation */
+.skeletonAvatar::after,
+.skeletonLine::after,
+.skeletonPill::after,
+.skeletonButton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 560px) {
+  .kycBannerContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .kycBannerButton {
+    width: 100%;
+  }
+
+  .listingPriceRow {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

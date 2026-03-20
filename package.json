@@ -1,0 +1,25 @@
+{
+  "name": "merlink",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Merlink - Location-based P2P crypto trading marketplace",
+  "scripts": {
+    "dev:web": "pnpm --filter @merlink/web dev",
+    "dev:server": "pnpm --filter @merlink/server dev",
+    "dev": "pnpm run --parallel dev:web dev:server",
+    "build:web": "pnpm --filter @merlink/web build",
+    "build:server": "pnpm --filter @merlink/server build",
+    "build": "pnpm run --parallel build:web build:server",
+    "lint": "pnpm -r run lint",
+    "type-check": "pnpm -r run type-check",
+    "db:generate": "pnpm --filter @merlink/server prisma:generate",
+    "db:migrate": "pnpm --filter @merlink/server prisma:migrate",
+    "db:push": "pnpm --filter @merlink/server prisma:push",
+    "db:studio": "pnpm --filter @merlink/server prisma:studio",
+    "clean": "pnpm -r run clean && rm -rf node_modules"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

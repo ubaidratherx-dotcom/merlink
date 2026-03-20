@@ -1,0 +1,415 @@
+/* KYC Verification — Mercury Design System */
+
+.container {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px 40px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  max-width: 520px;
+}
+
+.iconCircle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  font-size: 32px;
+}
+
+.iconCircleDefault {
+  background: var(--aurora-tint);
+}
+
+.iconCirclePending {
+  background: #FFF3E0;
+}
+
+.iconCircleVerified {
+  background: var(--kyc-verified-bg);
+}
+
+.iconCircleRejected {
+  background: var(--danger-bg);
+}
+
+.headline {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 17px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* Step Cards */
+.steps {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 40px;
+  width: 100%;
+  max-width: 680px;
+}
+
+.stepCard {
+  flex: 1;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  padding: 28px 24px;
+  text-align: center;
+  transition: all 200ms ease;
+}
+
+.stepCard:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.stepIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--aurora-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 24px;
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--aurora-gradient);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.stepTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.stepDescription {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  line-height: 1.45;
+}
+
+/* Buttons */
+.primaryButton {
+  width: 100%;
+  max-width: 400px;
+  height: 56px;
+  border-radius: var(--radius-xl);
+  background: var(--aurora-gradient);
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 600;
+  box-shadow: var(--shadow-primary-btn);
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.primaryButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0px 12px 32px rgba(123, 94, 255, 0.3);
+}
+
+.primaryButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  height: 48px;
+  padding: 0 28px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: var(--radius-lg);
+  transition: all 150ms ease;
+}
+
+.secondaryButton:hover {
+  background: var(--bg-tertiary);
+}
+
+.secondaryButton:active {
+  transform: scale(0.98);
+}
+
+/* Info Text */
+.infoText {
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.infoIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Error Banner */
+.errorBanner {
+  background: var(--danger-bg);
+  color: var(--alert-red);
+  font-size: 14px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  margin-bottom: 24px;
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Pending State */
+.pendingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.pendingSpinner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 4px solid #FFF3E0;
+  border-top-color: var(--warning-amber);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pendingText {
+  font-size: 17px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 380px;
+}
+
+.pendingSubtext {
+  font-size: 15px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.pendingActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Verified State */
+.verifiedCheckmark {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--kyc-verified-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.verifiedCheckmark svg {
+  width: 36px;
+  height: 36px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.badgeVerified {
+  background: var(--kyc-verified-bg);
+  color: var(--signal-green);
+}
+
+.badgePending {
+  background: #FFF3E0;
+  color: var(--warning-amber);
+}
+
+.successText {
+  font-size: 17px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+/* Rejected State */
+.rejectedIcon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--danger-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.rejectedIcon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.rejectedText {
+  font-size: 17px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.rejectedSubtext {
+  font-size: 15px;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+/* SDK Container */
+.sdkContainer {
+  width: 100%;
+  max-width: 600px;
+  min-height: 400px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+}
+
+.sdkLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 20px;
+}
+
+.sdkSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--aurora-start);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.sdkLoadingText {
+  font-size: 15px;
+  color: var(--text-tertiary);
+}
+
+/* Button Spinner */
+.buttonSpinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* State wrapper for transitions */
+.stateWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  animation: fadeIn 300ms ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 680px) {
+  .steps {
+    flex-direction: column;
+    max-width: 400px;
+  }
+
+  .container {
+    padding: 40px 20px 40px;
+  }
+
+  .headline {
+    font-size: 24px;
+  }
+
+  .sdkContainer {
+    padding: 16px;
+  }
+}

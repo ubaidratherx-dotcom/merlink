@@ -1,0 +1,369 @@
+.container {
+  padding: var(--space-lg);
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+/* Back navigation */
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.backLink:hover {
+  color: var(--text-primary);
+}
+
+/* Header */
+.header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.heading {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* Status badge */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 auto;
+}
+
+.statusConnected {
+  background: var(--kyc-verified-bg);
+  color: var(--signal-green);
+}
+
+/* Wallet cards grid */
+.walletGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.walletCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+  box-shadow: var(--shadow-card);
+}
+
+.walletIconWrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.walletIconWrapper svg {
+  width: 24px;
+  height: 24px;
+}
+
+.walletInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.walletName {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.walletDesc {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+/* Primary connect button */
+.connectButton {
+  width: 100%;
+  height: 56px;
+  background: var(--aurora-gradient);
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 600;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-primary-btn);
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.connectButton:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.connectButton:active {
+  transform: scale(0.98);
+}
+
+.connectButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Connected state */
+.connectedCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.addressRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.addressLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-xs);
+}
+
+.addressValue {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.copyButton {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 150ms ease;
+}
+
+.copyButton:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.copySuccess {
+  color: var(--signal-green);
+}
+
+/* Balance section */
+.balanceSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.balanceTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.balanceGrid {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.balanceItem {
+  flex: 1;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.balanceIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.balanceIconSol {
+  background: linear-gradient(135deg, #9945FF, #14F195);
+  color: #ffffff;
+}
+
+.balanceIconUsdc {
+  background: #2775CA;
+  color: #ffffff;
+}
+
+.balanceAmount {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.balanceAsset {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+/* Wallet actions */
+.walletActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.switchButton {
+  width: 100%;
+  height: 52px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: var(--radius-2xl);
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.switchButton:hover {
+  background: var(--bg-tertiary);
+}
+
+.switchButton:active {
+  transform: scale(0.98);
+}
+
+.switchButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Disconnect button */
+.disconnectButton {
+  width: 100%;
+  height: 52px;
+  background: var(--danger-bg);
+  color: var(--alert-red);
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: var(--radius-2xl);
+  transition: all 150ms ease;
+}
+
+.disconnectButton:hover {
+  opacity: 0.85;
+}
+
+.disconnectButton:active {
+  transform: scale(0.98);
+}
+
+.disconnectButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Error message */
+.error {
+  background: var(--danger-bg);
+  color: var(--alert-red);
+  font-size: 14px;
+  padding: var(--space-md) var(--space-base);
+  border-radius: var(--radius-md);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.spinnerDark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-secondary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin: var(--space-xl) auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Green dot for connected status inline */
+.greenDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--signal-green);
+  margin-left: 6px;
+}

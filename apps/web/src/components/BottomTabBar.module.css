@@ -1,0 +1,138 @@
+/* BottomTabBar — Mercury Design System */
+
+.tabBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.tabList {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 49px;
+  max-width: 600px;
+  margin: 0 auto;
+  list-style: none;
+  padding: 0;
+}
+
+.tabItem {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.tabLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 0;
+  text-decoration: none;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.tabLabel {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+/* Inactive state */
+.tabLink .tabIcon svg {
+  color: var(--text-tertiary);
+}
+
+.tabLink .tabLabel {
+  color: var(--text-tertiary);
+}
+
+/* Active state */
+.tabLinkActive .tabIcon svg {
+  color: var(--aurora-start);
+}
+
+.tabLinkActive .tabLabel {
+  color: var(--aurora-start);
+  font-weight: 600;
+}
+
+/* Active dot indicator */
+.activeDot {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--aurora-gradient);
+}
+
+/* Center FAB (Sell button) */
+.fabItem {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.fabButton {
+  position: absolute;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 64px;
+  border-radius: 32px;
+  background: var(--aurora-gradient);
+  color: #ffffff;
+  box-shadow: 0px 8px 24px rgba(123, 94, 255, 0.35);
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fabButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 12px 32px rgba(123, 94, 255, 0.45);
+}
+
+.fabButton:active {
+  transform: scale(0.92);
+  box-shadow: 0px 4px 16px rgba(123, 94, 255, 0.3);
+}
+
+.fabIcon {
+  width: 26px;
+  height: 26px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tabBar {
+    background: rgba(28, 28, 30, 0.94);
+  }
+}

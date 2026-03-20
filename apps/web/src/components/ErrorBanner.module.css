@@ -1,0 +1,48 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #FFF0EF;
+  border-left: 3px solid #FF453A;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  animation: slideIn 300ms ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #FF453A;
+  line-height: 1.4;
+}
+
+.dismiss {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #FF453A;
+  background: transparent;
+  transition: background 150ms ease;
+  cursor: pointer;
+}
+
+.dismiss:hover {
+  background: rgba(255, 69, 58, 0.1);
+}

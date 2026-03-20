@@ -1,0 +1,107 @@
+/* TopNavBar — Mercury Design System */
+
+.navBar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  height: 44px;
+  padding: 0 var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 200ms ease, box-shadow 200ms ease;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.navBarTransparent {
+  background: transparent;
+}
+
+.navBarFrosted {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 0.5px 0 0 var(--border);
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  min-width: 44px;
+}
+
+.title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.iconButton {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-primary);
+  transition: background 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iconButton:hover {
+  background: var(--bg-secondary);
+}
+
+.iconButton:active {
+  background: var(--bg-tertiary);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--aurora-gradient);
+  cursor: pointer;
+  transition: transform 150ms ease;
+  text-decoration: none;
+}
+
+.avatar:hover {
+  transform: scale(1.06);
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarInitials {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .navBarFrosted {
+    background: rgba(28, 28, 30, 0.94);
+  }
+}

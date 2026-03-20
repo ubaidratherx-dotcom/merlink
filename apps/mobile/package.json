@@ -1,0 +1,19 @@
+{
+  "name": "@merlink/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@merlink/types": "workspace:*",
+    "@merlink/utils": "workspace:*",
+    "@merlink/config": "workspace:*",
+    "@merlink/ui": "workspace:*",
+    "@merlink/api": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
