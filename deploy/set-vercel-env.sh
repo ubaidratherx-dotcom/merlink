@@ -7,7 +7,8 @@ ENV_FILE="deploy/api-production.env"
 [ -f "$ENV_FILE" ] || { echo "missing $ENV_FILE"; exit 1; }
 
 echo "→ linking repo root to project merlink-api"
-vercel link --project merlink-api --yes >/dev/null
+mkdir -p .vercel
+printf '{"projectId":"prj_kA2PY68aMkVe0q3PrEuYuDDCTrHo","orgId":"team_DZFxBztLmOomeORlePPnotLM","projectName":"merlink-api"}\n' > .vercel/project.json
 
 echo "→ setting production environment variables"
 while IFS= read -r line; do
