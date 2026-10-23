@@ -411,6 +411,17 @@ async function getListings(filters: GetListingsFilters) {
     where.minAmount = { lte: filters.maxAmount };
   }
 
+  // Location search: page over nearby listings, not the newest ones worldwide.
+  // A bounding box narrows the query; the exact haversine filter runs below.
+  const hasLocationFilter = filters.latitude !== undefined && filters.longitude !== undefined;
+  const radiusKm = filters.radius ?? 0;
+  if (hasLocationFilter && radiusKm > 0) {
+    const dLat = radiusKm / 111;
+    const dLng = radiusKm / (111 * Math.max(0.2, Math.cos((filters.latitude! * Math.PI) / 180)));
+    where.latitude = { gte: filters.latitude! - dLat, lte: filters.latitude! + dLat };
+    where.longitude = { gte: filters.longitude! - dLng, lte: filters.longitude! + dLng };
+  }
+
   // Fetch listings with seller info
   const [listings, total] = await Promise.all([
     prisma.listing.findMany({
@@ -426,8 +437,9 @@ async function getListings(filters: GetListingsFilters) {
           },
         },
       },
-      skip,
-      take: limit,
+      // With a location the whole nearby set is ranked in memory (no paging), so take a wide candidate set
+      skip: hasLocationFilter ? 0 : skip,
+      take: hasLocationFilter ? Math.max(limit, 100) : limit,
       orderBy: { createdAt: "desc" },
     }),
     prisma.listing.count({ where }),
