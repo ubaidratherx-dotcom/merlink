@@ -32,6 +32,11 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // 2FA
+  const [show2FA, setShow2FA] = useState(false);
+  const [twoFAUserId, setTwoFAUserId] = useState("");
+  const [twoFACode, setTwoFACode] = useState("");
+
   function validate(): boolean {
     const errors: FieldErrors = {};
 
@@ -74,8 +79,16 @@ export default function LoginPage() {
         const result = await api.auth.loginEmail({
           email: email.trim(),
           password,
-        });
-        const { user, ...tokens } = result as any;
+        }) as any;
+
+        if (result.requires2FA) {
+          setTwoFAUserId(result.userId);
+          setShow2FA(true);
+          setIsLoading(false);
+          return;
+        }
+
+        const { user, ...tokens } = result;
         setTokens({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
         setUser(user);
         router.push("/");
@@ -85,6 +98,55 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (show2FA) {
+    return (
+      <>
+        <h2 className={styles.heading}>Two-Factor Authentication</h2>
+        <p style={{ color: "var(--text-secondary)", fontSize: 14, textAlign: "center", marginBottom: 16 }}>
+          Enter the 6-digit code from your authenticator app
+        </p>
+        {apiError && <div className={styles.error}>{apiError}</div>}
+        <input
+          type="text"
+          className={styles.input}
+          placeholder="000000"
+          value={twoFACode}
+          onChange={e => setTwoFACode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          maxLength={6}
+          style={{ textAlign: "center", fontSize: 28, letterSpacing: 10, fontWeight: 700 }}
+          autoFocus
+        />
+        <button
+          className={styles.submitButton}
+          disabled={isLoading || twoFACode.length !== 6}
+          onClick={async () => {
+            setIsLoading(true);
+            setApiError("");
+            try {
+              const result = await api.auth.loginVerify2FA(twoFAUserId, twoFACode);
+              const { user, ...tokens } = result as any;
+              setTokens({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
+              setUser(user);
+              router.push("/");
+            } catch (err: any) {
+              setApiError(err.message || "Invalid code");
+            } finally {
+              setIsLoading(false);
+            }
+          }}
+        >
+          {isLoading ? "Verifying..." : "Verify"}
+        </button>
+        <button
+          style={{ background: "none", border: "none", color: "var(--text-tertiary)", fontSize: 13, cursor: "pointer", marginTop: 8 }}
+          onClick={() => { setShow2FA(false); setTwoFACode(""); setApiError(""); }}
+        >
+          Back to login
+        </button>
+      </>
+    );
   }
 
   return (

@@ -1,0 +1,5 @@
+package com.merlink.app;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}

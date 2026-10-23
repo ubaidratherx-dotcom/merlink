@@ -23,11 +23,13 @@ export async function startKyc(
       return;
     }
 
-    // If already verified, no need to start again
     if (user.kycStatus === "VERIFIED") {
-      res
-        .status(400)
-        .json({ error: { message: "KYC already verified", code: "BAD_REQUEST" } });
+      res.status(400).json({ error: { message: "KYC already verified", code: "BAD_REQUEST" } });
+      return;
+    }
+
+    if (user.kycStatus === "PERMANENTLY_REJECTED") {
+      res.status(403).json({ error: { message: "Your KYC application has been permanently rejected. Please contact support.", code: "KYC_PERMANENTLY_REJECTED" } });
       return;
     }
 

@@ -1,7 +1,7 @@
 // ─── User & Auth ─────────────────────────────────────────────
 export type AccountStatus = "UNVERIFIED" | "PHONE_VERIFIED";
 
-export type KycStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
+export type KycStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED" | "PERMANENTLY_REJECTED";
 
 export type AuthProvider = "phone" | "email";
 
@@ -291,8 +291,8 @@ export interface PaginatedResponse<T> {
 export const PROTOCOL_FEE_PERCENTAGE = 0.005; // 0.5%
 export const DEFAULT_SEARCH_RADIUS_KM = 100;
 export const BUY_REQUEST_EXPIRY_MINUTES = 30;
-export const PAYMENT_DEADLINE_HOURS = 6;
-export const SELLER_CONFIRMATION_HOURS = 1;
+export const PAYMENT_DEADLINE_HOURS = 24;
+export const SELLER_CONFIRMATION_HOURS = 0; // No auto-release — seller confirms manually
 
 export const DISCOVERY_WEIGHTS: DiscoveryRanking = {
   distanceWeight: 0.4,

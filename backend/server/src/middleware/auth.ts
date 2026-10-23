@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 export interface JwtPayload {
   userId: string;
   username: string;
+  jti?: string;
 }
 
 declare global {

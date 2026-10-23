@@ -2,6 +2,7 @@ import { Server as HttpServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from "../middleware/auth";
+import { chatService } from "../services/chat.service";
 
 let io: SocketServer;
 
@@ -109,6 +110,17 @@ export function setupSocket(server: HttpServer): SocketServer {
 
     socket.on("leave-chat", (tradeId: string) => {
       socket.leave(`chat:${tradeId}`);
+    });
+
+    socket.on("send-message", async (data: { tradeId: string; content: string }, ack?: (res: any) => void) => {
+      try {
+        const message = await chatService.sendMessage(data.tradeId, user.userId, data.content);
+        // Broadcast to everyone in the chat room (including sender)
+        chatNs.to(`chat:${data.tradeId}`).emit("new-message", message);
+        if (ack) ack({ success: true, data: message });
+      } catch (err: any) {
+        if (ack) ack({ success: false, error: err.message });
+      }
     });
 
     socket.on("disconnect", () => {

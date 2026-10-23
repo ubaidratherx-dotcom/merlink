@@ -108,6 +108,11 @@ body {
   color: var(--text-primary);
   background-color: var(--bg-primary);
   min-height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
 }
 
 a {

@@ -24,6 +24,7 @@ enum KycStatus {
   PENDING
   VERIFIED
   REJECTED
+  PERMANENTLY_REJECTED
 }
 
 model User {
@@ -38,6 +39,13 @@ model User {
   kycStatus     KycStatus     @default(UNVERIFIED)
   walletAddress String?       @unique
   walletVerified Boolean      @default(false)
+  ethWalletAddress String?    @unique
+  ethWalletVerified Boolean   @default(false)
+  btcAddress    String?       @unique
+  btcPubkey     String?       // hex public key for multisig
+  bio           String?       @db.VarChar(250)
+  twoFactorSecret String?
+  twoFactorEnabled Boolean    @default(false)
   sellerMode    Boolean       @default(false)
   latitude      Float?
   longitude     Float?
@@ -61,6 +69,9 @@ model User {
   kycApplication     KycApplication?
   emailVerifications EmailVerification[]
   passwordResets     PasswordReset[]
+  offers             Offer[]
+  disputeEvidence    DisputeEvidence[]
+  notifications      Notification[]
 
   @@index([latitude, longitude])
   @@index([kycStatus])
@@ -125,7 +136,10 @@ model PasswordReset {
 
 enum SupportedAsset {
   USDC
+  USDT
   SOL
+  ETH
+  BTC
 }
 
 enum PriceType {
@@ -155,6 +169,7 @@ model Listing {
   sellerId         String
   seller           User             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   asset            SupportedAsset
+  chain            String           @default("solana") // "solana" or "ethereum"
   priceType        PriceType        @default(FIXED)
   priceValue       Float
   minAmount        Float
@@ -162,6 +177,7 @@ model Listing {
   paymentMethods   PaymentMethodEnum[]
   tradeType        TradeTypeAllowed
   availableLiquidity Float?
+  paymentInstructions String?
   isActive         Boolean          @default(true)
   latitude         Float?
   longitude        Float?
@@ -193,6 +209,7 @@ model BuyRequest {
   createdAt     DateTime         @default(now())
 
   trades        Trade[]
+  offers        Offer[]
 
   @@index([buyerId])
   @@index([asset])
@@ -200,6 +217,32 @@ model BuyRequest {
   @@index([expiresAt])
   @@index([latitude, longitude])
   @@map("buy_requests")
+}
+
+// ─── Offers ─────────────────────────────────────────────────
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model Offer {
+  id             String           @id @default(cuid())
+  buyRequestId   String
+  buyRequest     BuyRequest       @relation(fields: [buyRequestId], references: [id], onDelete: Cascade)
+  sellerId       String
+  seller         User             @relation(fields: [sellerId], references: [id])
+  price          Float            // price per unit offered by seller
+  tradeType      TradeType
+  status         OfferStatus      @default(PENDING)
+  createdAt      DateTime         @default(now())
+
+  @@index([buyRequestId])
+  @@index([sellerId])
+  @@index([status])
+  @@map("offers")
 }
 
 // ─── Trades ──────────────────────────────────────────────────
@@ -236,6 +279,7 @@ model Trade {
   price                Float
   paymentMethod        PaymentMethodEnum
   tradeType            TradeType
+  chain                String        @default("solana") // "solana" or "ethereum"
   status               TradeStatus   @default(CREATED)
   escrowAddress        String?
   escrowTxSignature    String?
@@ -257,6 +301,7 @@ model Trade {
   @@index([sellerId])
   @@index([status])
   @@index([createdAt])
+  @@index([status, paymentDeadline])
   @@map("trades")
 }
 
@@ -284,6 +329,7 @@ model ChatMessage {
   senderId    String
   sender      User     @relation(fields: [senderId], references: [id])
   content     String
+  isAdmin     Boolean  @default(false)
   isBlocked   Boolean  @default(false)
   blockReason String?
   createdAt   DateTime @default(now())
@@ -291,6 +337,17 @@ model ChatMessage {
   @@index([tradeId])
   @@index([senderId])
   @@map("chat_messages")
+}
+
+model ChatReadStatus {
+  id        String   @id @default(cuid())
+  tradeId   String
+  userId    String
+  lastReadAt DateTime @default(now())
+
+  @@unique([tradeId, userId])
+  @@index([userId])
+  @@map("chat_read_status")
 }
 
 // ─── Reviews ─────────────────────────────────────────────────
@@ -348,24 +405,61 @@ model Dispute {
   resolvedBy  String?
   resolver    User?              @relation("DisputeResolver", fields: [resolvedBy], references: [id])
   resolvedAt  DateTime?
+  resolveNote String?
   createdAt   DateTime           @default(now())
+
+  evidence    DisputeEvidence[]
 
   @@index([initiatedBy])
   @@map("disputes")
 }
 
+model DisputeEvidence {
+  id         String   @id @default(cuid())
+  disputeId  String
+  dispute    Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  type       String   @default("screenshot") // screenshot, text
+  content    String   // file URL or text content
+  createdAt  DateTime @default(now())
+
+  @@index([disputeId])
+  @@map("dispute_evidence")
+}
+
 // ─── KYC ──────────────────────────────────────────────────
 
 model KycApplication {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  applicantId   String?  // Sumsub applicant ID
-  levelName     String   @default("basic-kyc-level")
-  reviewStatus  String?  // GREEN, RED, etc.
-  reviewComment String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicantId     String?  // Sumsub applicant ID
+  levelName       String   @default("basic-kyc-level")
+  reviewStatus    String?  // GREEN, RED, etc.
+  reviewComment   String?
+  softRejections  Int      @default(0)  // increments on each soft rejection (max 5)
+  hardRejections  Int      @default(0)  // increments on each hard rejection (max 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("kyc_applications")
+}
+
+// ─── Notifications ──────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // buy-request, offer, trade-update, dispute
+  title     String
+  subtitle  String?
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

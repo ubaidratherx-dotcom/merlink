@@ -1,0 +1,19 @@
+{
+  "name": "Merlink",
+  "short_name": "Merlink",
+  "description": "P2P Crypto Trading Marketplace",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#7B5EFF",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

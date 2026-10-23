@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { api } from "@/lib/api";
 import type { User } from "@merlink/types";
 import bs58 from "bs58";
+import { detectBtcWallets, getBtcWallet, type BtcWalletInfo } from "@/lib/btc-wallet";
 import styles from "./page.module.css";
 
 const VERIFICATION_MESSAGE =
@@ -31,6 +32,82 @@ const SUPPORTED_WALLETS = [
   },
 ];
 
+function BtcWalletConnect({ onConnect, onError, autoOpen = false }: { onConnect: (address: string, pubkey: string) => void; onError: (msg: string) => void; autoOpen?: boolean }) {
+  const [wallets, setWallets] = useState<BtcWalletInfo[]>([]);
+  const [connecting, setConnecting] = useState(false);
+  const [showPicker, setShowPicker] = useState(autoOpen);
+
+  // Detect wallets multiple times — extensions can inject at different times
+  useEffect(() => {
+    const detect = () => setWallets(detectBtcWallets());
+    detect(); // immediate
+    const t1 = setTimeout(detect, 500);
+    const t2 = setTimeout(detect, 1500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  const installed = wallets.filter(w => w.installed);
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      {!showPicker ? (
+        <button
+          style={{ width: "100%", padding: "12px 16px", background: "rgba(247,147,26,0.08)", border: "1px solid rgba(247,147,26,0.2)", borderRadius: 12, fontSize: 13, fontWeight: 600, color: "#F7931A", textAlign: "center", cursor: "pointer" }}
+          onClick={() => setShowPicker(true)}
+          disabled={connecting}
+        >
+          + Connect Bitcoin Wallet
+        </button>
+      ) : (
+        <div style={{ border: "1px solid rgba(247,147,26,0.2)", borderRadius: 12, overflow: "hidden" }}>
+          <div style={{ padding: "10px 14px", background: "rgba(247,147,26,0.06)", fontSize: 13, fontWeight: 600, color: "#F7931A", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>Select BTC Wallet</span>
+            <button onClick={() => setShowPicker(false)} style={{ background: "none", border: "none", color: "var(--text-tertiary)", cursor: "pointer", fontSize: 16 }}>x</button>
+          </div>
+          {installed.length === 0 ? (
+            <div style={{ padding: "16px 14px", fontSize: 13, color: "var(--text-tertiary)", textAlign: "center" }}>
+              No Bitcoin wallet detected.<br />Install Phantom, Unisat, Xverse, Leather, or OKX.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {installed.map(w => (
+                <button
+                  key={w.id}
+                  disabled={connecting}
+                  onClick={async () => {
+                    setConnecting(true);
+                    try {
+                      const adapter = getBtcWallet(w.id);
+                      if (!adapter) throw new Error(`${w.name} not available`);
+                      const result = await adapter.connect();
+                      onConnect(result.address, result.publicKey);
+                      setShowPicker(false);
+                    } catch (err: any) {
+                      if (err?.code !== 4001) onError(err?.message || `Failed to connect ${w.name}`);
+                    } finally {
+                      setConnecting(false);
+                    }
+                  }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "12px 14px", background: "none",
+                    borderTop: "1px solid var(--border)", border: "none", borderBottom: "1px solid var(--border)",
+                    color: "var(--text-primary)", cursor: "pointer", fontSize: 14, fontWeight: 500,
+                  }}
+                >
+                  <span style={{ fontSize: 22 }}>{w.icon}</span>
+                  <span>{w.name}</span>
+                  {connecting && <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>...</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WalletPage() {
   const { user, updateUser } = useAuthStore();
   const { connected, publicKey, signMessage, disconnect, connecting, select, wallets, connect, wallet } =
@@ -45,6 +122,16 @@ export default function WalletPage() {
   );
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // BTC wallet switch state
+  const [showBtcSwitch, setShowBtcSwitch] = useState(false);
+
+  // ETH wallet state
+  const [ethConnecting, setEthConnecting] = useState(false);
+  const [ethDisconnecting, setEthDisconnecting] = useState(false);
+  const [ethBalance, setEthBalance] = useState<{ eth: number; usdc: number; usdt: number } | null>(null);
+  const [ethLoadingBalance, setEthLoadingBalance] = useState(false);
+  const [ethCopied, setEthCopied] = useState(false);
 
   // Track whether we've already attempted verification for this connection
   const verificationAttempted = useRef(false);
@@ -101,6 +188,27 @@ export default function WalletPage() {
         });
 
         updateUser(updatedUser as Partial<User>);
+
+        // Auto-connect ETH wallet if available (same Phantom wallet supports both)
+        try {
+          if ((window as any).ethereum) {
+            const { BrowserProvider } = await import("ethers");
+            const ethProvider = new BrowserProvider((window as any).ethereum);
+            await ethProvider.send("eth_requestAccounts", []);
+            const signer = await ethProvider.getSigner();
+            const ethAddress = await signer.getAddress();
+            const ethMessage = "Sign this message to verify Ethereum wallet ownership for CryptoMeet.";
+            const ethSig = await signer.signMessage(ethMessage);
+            const ethUser = await api.wallet.ethVerify({
+              walletAddress: ethAddress,
+              signature: ethSig,
+              message: ethMessage,
+            });
+            updateUser(ethUser as Partial<User>);
+          }
+        } catch {
+          // ETH auto-connect failed silently — user can connect manually later
+        }
       } catch (err) {
         // User rejected signature or network error
         const message =
@@ -157,7 +265,6 @@ export default function WalletPage() {
 
   function handleConnect() {
     setError("");
-    // Try to find and directly select a wallet, fallback to modal
     const phantom = wallets.find(w => w.adapter.name === "Phantom");
     if (phantom && phantom.readyState === "Installed") {
       select(phantom.adapter.name);
@@ -371,6 +478,135 @@ export default function WalletPage() {
             </div>
           </div>
 
+          {/* ETH Wallet — shown inside connected state */}
+          {user?.ethWalletAddress ? (
+            <div className={styles.connectedCard} style={{ marginTop: 12 }}>
+              <div>
+                <div className={styles.addressLabel} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 1.5l-7 11.5 7 4 7-4L12 1.5z" fill="#627EEA" opacity="0.6"/><path d="M12 1.5v9.87l7 3.13L12 1.5z" fill="#627EEA"/></svg>
+                  Ethereum
+                </div>
+                <div className={styles.addressRow}>
+                  <span className={styles.addressValue} style={{ fontSize: 12 }}>{user.ethWalletAddress}</span>
+                </div>
+              </div>
+              <div className={styles.balanceSection}>
+                {ethBalance ? (
+                  <div className={styles.balanceGrid}>
+                    <div className={styles.balanceItem}>
+                      <div className={styles.balanceIcon} style={{ background: "rgba(98,126,234,0.15)", color: "#627EEA" }}>E</div>
+                      <span className={styles.balanceAmount}>{ethBalance.eth.toFixed(6)}</span>
+                      <span className={styles.balanceAsset}>ETH</span>
+                    </div>
+                    <div className={styles.balanceItem}>
+                      <div className={`${styles.balanceIcon} ${styles.balanceIconUsdc}`}>$</div>
+                      <span className={styles.balanceAmount}>{ethBalance.usdc.toFixed(2)}</span>
+                      <span className={styles.balanceAsset}>USDC</span>
+                    </div>
+                    <div className={styles.balanceItem}>
+                      <div className={styles.balanceIcon} style={{ background: "rgba(38,161,123,0.15)", color: "#26A17B" }}>T</div>
+                      <span className={styles.balanceAmount}>{ethBalance.usdt.toFixed(2)}</span>
+                      <span className={styles.balanceAsset}>USDT</span>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    style={{ fontSize: 12, color: "#627EEA", fontWeight: 600 }}
+                    onClick={async () => {
+                      setEthLoadingBalance(true);
+                      try { setEthBalance(await api.wallet.ethGetBalance()); } catch {} finally { setEthLoadingBalance(false); }
+                    }}
+                    disabled={ethLoadingBalance}
+                  >
+                    {ethLoadingBalance ? "Loading..." : "Show ETH Balance"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button
+              style={{ marginTop: 12, width: "100%", padding: "12px 16px", background: "rgba(98,126,234,0.08)", border: "1px solid rgba(98,126,234,0.2)", borderRadius: 12, fontSize: 13, fontWeight: 600, color: "#627EEA", textAlign: "center" }}
+              disabled={ethConnecting}
+              onClick={async () => {
+                setEthConnecting(true);
+                try {
+                  if (!(window as any).ethereum) { setError("No Ethereum wallet found"); return; }
+                  const { BrowserProvider } = await import("ethers");
+                  const ethProvider = new BrowserProvider((window as any).ethereum);
+                  await ethProvider.send("eth_requestAccounts", []);
+                  const signer = await ethProvider.getSigner();
+                  const ethAddress = await signer.getAddress();
+                  const ethMessage = "Sign this message to verify Ethereum wallet ownership for CryptoMeet.";
+                  const ethSig = await signer.signMessage(ethMessage);
+                  const updated = await api.wallet.ethVerify({ walletAddress: ethAddress, signature: ethSig, message: ethMessage });
+                  updateUser(updated as Partial<User>);
+                } catch (err: any) {
+                  if (err?.code !== 4001) setError(err.message || "Failed to connect ETH wallet");
+                } finally { setEthConnecting(false); }
+              }}
+            >
+              {ethConnecting ? "Connecting ETH..." : "+ Connect Ethereum Wallet"}
+            </button>
+          )}
+
+          {/* BTC Wallet */}
+          {user?.btcAddress && !showBtcSwitch ? (
+            <div className={styles.connectedCard} style={{ marginTop: 12 }}>
+              <div>
+                <div className={styles.addressLabel} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#F7931A" opacity="0.2"/><text x="12" y="16" textAnchor="middle" fill="#F7931A" fontSize="12" fontWeight="bold">₿</text></svg>
+                  Bitcoin
+                </div>
+                <div className={styles.addressRow}>
+                  <span className={styles.addressValue} style={{ fontSize: 12 }}>{user.btcAddress}</span>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => setShowBtcSwitch(true)}
+                style={{
+                  padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                  background: "rgba(247,147,26,0.08)", color: "#F7931A",
+                  border: "1px solid rgba(247,147,26,0.15)", cursor: "pointer",
+                }}
+              >
+                Switch BTC Wallet
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await api.wallet.btcDisconnect();
+                    updateUser({ btcAddress: null, btcPubkey: null } as any);
+                  } catch (err: any) {
+                    setError(err?.message || "Failed to disconnect BTC wallet");
+                  }
+                }}
+                style={{
+                  padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                  background: "rgba(255,69,58,0.08)", color: "#FF453A",
+                  border: "1px solid rgba(255,69,58,0.15)", cursor: "pointer",
+                }}
+              >
+                Disconnect
+              </button>
+              </div>
+            </div>
+          ) : (
+            <BtcWalletConnect
+              autoOpen={showBtcSwitch}
+              onConnect={async (address, pubkey) => {
+                try {
+                  const updated = await api.wallet.btcConnect({ btcAddress: address, btcPubkey: pubkey });
+                  updateUser(updated as any);
+                  setShowBtcSwitch(false);
+                } catch (err: any) {
+                  setError(err.message || "Failed to connect BTC wallet");
+                }
+              }}
+              onError={setError}
+            />
+          )}
+
           {/* Switch / Disconnect */}
           <div className={styles.walletActions}>
             <button
@@ -443,6 +679,7 @@ export default function WalletPage() {
           </button>
         </>
       )}
+
     </div>
   );
 }

@@ -182,3 +182,70 @@
     transform: translateX(100%);
   }
 }
+
+/* Trade Cards */
+.tradeCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  text-decoration: none;
+  transition: all 150ms ease;
+}
+
+.tradeCard:hover {
+  border-color: rgba(123, 94, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.tradeAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--aurora-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.tradeContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.tradeName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tradeMeta {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tradeStatus {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7B5EFF;
+  background: rgba(123, 94, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

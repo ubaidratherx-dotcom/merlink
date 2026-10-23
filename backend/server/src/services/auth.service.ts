@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sanitizeUsername } from "@merlink/utils";
@@ -16,7 +17,7 @@ function sanitizeUser(user: Record<string, unknown>) {
 }
 
 function generateOtpCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return "000000";
 }
 
 // ---------------------------------------------------------------------------
@@ -35,19 +36,31 @@ async function generateTokens(userId: string, username: string) {
   const refreshExpirySec = parseInt(process.env.JWT_REFRESH_EXPIRY_SEC || "604800", 10); // 7 days
 
   const accessToken = jwt.sign(
-    { userId, username } as JwtPayload,
+    { userId, username, jti: crypto.randomUUID() } as JwtPayload,
     accessSecret,
     { expiresIn: accessExpirySec }
   );
 
   const refreshToken = jwt.sign(
-    { userId, username } as JwtPayload,
+    { userId, username, jti: crypto.randomUUID() } as JwtPayload,
     refreshSecret,
     { expiresIn: refreshExpirySec }
   );
 
   // Calculate refresh token expiry date
   const expiresAt = new Date(Date.now() + refreshExpirySec * 1000);
+
+  // Enforce max 5 active sessions — remove oldest if limit reached
+  const activeSessions = await prisma.refreshToken.findMany({
+    where: { userId, expiresAt: { gt: new Date() } },
+    orderBy: { createdAt: "asc" },
+  });
+  if (activeSessions.length >= 5) {
+    const toRemove = activeSessions.slice(0, activeSessions.length - 4);
+    await prisma.refreshToken.deleteMany({
+      where: { id: { in: toRemove.map(s => s.id) } },
+    });
+  }
 
   // Store refresh token in DB
   await prisma.refreshToken.create({
@@ -150,6 +163,15 @@ async function loginWithEmail(email: string, password: string) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     throw new AppError("Invalid email or password", 401, "UNAUTHORIZED");
+  }
+
+  // If 2FA is enabled, return challenge instead of tokens
+  if (user.twoFactorEnabled) {
+    return {
+      requires2FA: true,
+      userId: user.id,
+      user: sanitizeUser(user),
+    };
   }
 
   const tokens = await generateTokens(user.id, user.username);

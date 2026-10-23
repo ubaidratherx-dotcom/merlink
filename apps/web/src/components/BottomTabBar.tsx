@@ -1,7 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuthStore } from "@/stores/auth.store";
+import { api } from "@/lib/api";
 import styles from "./BottomTabBar.module.css";
 
 const tabs = [
@@ -75,6 +78,27 @@ function ProfileIcon({ active }: { active: boolean }) {
 
 export default function BottomTabBar() {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuthStore();
+  const [pendingCount, setPendingCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchCounts = () => {
+      api.trades.getPendingCount().then((data) => {
+        setPendingCount(data.count);
+      }).catch(() => {});
+      api.chat.getConversations().then((convos) => {
+        const total = convos.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0);
+        setUnreadMessages(total);
+      }).catch(() => {});
+    };
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 5000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   return (
     <nav className={styles.tabBar} role="tablist" aria-label="Main navigation">
@@ -126,6 +150,16 @@ export default function BottomTabBar() {
                 <span className={styles.tabIcon}>
                   {active && <span className={styles.activeDot} />}
                   <Icon active={active} />
+                  {tab.key === "trades" && pendingCount > 0 && (
+                    <span className={styles.badge}>
+                      {pendingCount > 9 ? "9+" : pendingCount}
+                    </span>
+                  )}
+                  {tab.key === "messages" && unreadMessages > 0 && (
+                    <span className={styles.badge}>
+                      {unreadMessages > 9 ? "9+" : unreadMessages}
+                    </span>
+                  )}
                 </span>
                 <span className={styles.tabLabel}>{tab.label}</span>
               </Link>

@@ -159,8 +159,30 @@ export const api = {
     resetPassword: (token: string, password: string) =>
       fetchApi<{ message: string }>("/auth/reset-password", {
         method: "POST",
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ token, newPassword: password }),
       }),
+
+    changePassword: (currentPassword: string, newPassword: string) =>
+      fetchApi<{ message: string }>("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      }),
+
+    getSessions: () => fetchApi<any[]>("/auth/sessions"),
+
+    revokeSession: (sessionId: string) =>
+      fetchApi<any>(`/auth/sessions/${sessionId}`, { method: "DELETE" }),
+
+    setup2FA: () => fetchApi<{ secret: string; qrCodeDataUrl: string }>("/auth/2fa/setup", { method: "POST" }),
+
+    verify2FA: (code: string) =>
+      fetchApi<any>("/auth/2fa/verify", { method: "POST", body: JSON.stringify({ code }) }),
+
+    disable2FA: (code: string) =>
+      fetchApi<any>("/auth/2fa/disable", { method: "POST", body: JSON.stringify({ code }) }),
+
+    loginVerify2FA: (userId: string, code: string) =>
+      fetchApi<any>("/auth/2fa/login-verify", { method: "POST", body: JSON.stringify({ userId, code }) }),
   },
 
   email: {
@@ -171,11 +193,13 @@ export const api = {
   },
 
   users: {
-    updateProfile: (data: { username?: string; latitude?: number; longitude?: number }) =>
+    updateProfile: (data: { username?: string; latitude?: number; longitude?: number; bio?: string; profilePhoto?: string }) =>
       fetchApi<User>("/users/profile", {
         method: "PUT",
         body: JSON.stringify(data),
       }),
+    getPublicProfile: (userId: string) =>
+      fetchApi<any>(`/users/${userId}`),
   },
 
   upload: {
@@ -201,6 +225,20 @@ export const api = {
       fetchApi<User>("/wallet/disconnect", { method: "POST" }),
     getBalance: () =>
       fetchApi<{ sol: number; usdc: number }>("/wallet/balance"),
+    // ETH wallet
+    ethVerify: (data: { walletAddress: string; signature: string; message: string }) =>
+      fetchApi<User>("/wallet/eth/verify", { method: "POST", body: JSON.stringify(data) }),
+    ethDisconnect: () =>
+      fetchApi<User>("/wallet/eth/disconnect", { method: "POST" }),
+    ethGetBalance: () =>
+      fetchApi<{ eth: number; usdc: number; usdt: number }>("/wallet/eth/balance"),
+    // BTC wallet
+    btcConnect: (data: { btcAddress: string; btcPubkey: string }) =>
+      fetchApi<any>("/wallet/btc/connect", { method: "POST", body: JSON.stringify(data) }),
+    btcDisconnect: () =>
+      fetchApi<any>("/wallet/btc/disconnect", { method: "POST" }),
+    btcGetBalance: () =>
+      fetchApi<{ btc: number }>("/wallet/btc/balance"),
   },
 
   kyc: {
@@ -210,7 +248,14 @@ export const api = {
         body: JSON.stringify(data || {}),
       }),
     getStatus: () =>
-      fetchApi<{ kycStatus: string; applicantId?: string }>("/kyc/status"),
+      fetchApi<{
+        kycStatus: string;
+        applicantId: string | null;
+        softRejections: number;
+        hardRejections: number;
+        reviewComment: string | null;
+        canRetry: boolean;
+      }>("/kyc/status"),
   },
 
   listings: {
@@ -236,10 +281,187 @@ export const api = {
       fetchApi(`/listings/${listingId}`),
     getAll: (params?: Record<string, string>) => {
       const query = params ? "?" + new URLSearchParams(params).toString() : "";
-      return fetchApi<{ listings: any[]; total: number }>(`/listings${query}`);
+      return fetchApi<{ items: any[]; listings?: any[]; total: number; radius?: number | null; radiusLabel?: string | null; nextRadius?: number | null }>(`/listings${query}`);
     },
     refreshLiquidity: (listingId: string) =>
       fetchApi(`/listings/${listingId}/refresh`, { method: "POST" }),
+  },
+
+  chat: {
+    getConversations: () => fetchApi<any[]>("/chat/conversations"),
+    markRead: (tradeId: string) =>
+      fetchApi<any>(`/chat/${tradeId}/read`, { method: "POST" }),
+    getMessages: (tradeId: string, cursor?: string) => {
+      const query = cursor ? `?cursor=${cursor}` : "";
+      return fetchApi<{ messages: any[]; hasMore: boolean }>(
+        `/chat/${tradeId}/messages${query}`
+      );
+    },
+    sendMessage: (tradeId: string, content: string) =>
+      fetchApi<any>(`/chat/${tradeId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ content }),
+      }),
+  },
+
+  buyRequests: {
+    create: (data: { asset: string; amount: number; paymentMethod: string; latitude: number; longitude: number }) =>
+      fetchApi<any>("/buy-requests", { method: "POST", body: JSON.stringify(data) }),
+
+    getAll: (params?: Record<string, string>) => {
+      const query = params ? "?" + new URLSearchParams(params).toString() : "";
+      return fetchApi<{ items: any[]; total: number; radius?: number | null; radiusLabel?: string | null; nextRadius?: number | null }>(`/buy-requests${query}`);
+    },
+
+    getMine: () => fetchApi<any[]>("/buy-requests/mine"),
+
+    getById: (id: string) => fetchApi<any>(`/buy-requests/${id}`),
+
+    cancel: (id: string) => fetchApi<any>(`/buy-requests/${id}`, { method: "DELETE" }),
+  },
+
+  btc: {
+    createEscrow: (data: { tradeId: string; sellerBtcPubkey: string; buyerBtcPubkey: string }) =>
+      fetchApi<any>("/btc/escrow/create", { method: "POST", body: JSON.stringify(data) }),
+    checkDeposit: (address: string) =>
+      fetchApi<any>(`/btc/escrow/deposit/${address}`),
+    buildRelease: (data: { tradeId: string; recipientAddress: string }) =>
+      fetchApi<any>("/btc/escrow/build-release", { method: "POST", body: JSON.stringify(data) }),
+    coSignBroadcast: (tradeId: string, psbtBase64: string) =>
+      fetchApi<any>("/btc/escrow/cosign-broadcast", { method: "POST", body: JSON.stringify({ tradeId, psbtBase64 }) }),
+    buildCancel: (tradeId: string) =>
+      fetchApi<any>("/btc/escrow/build-cancel", { method: "POST", body: JSON.stringify({ tradeId }) }),
+    buildDisputeClaim: (tradeId: string) =>
+      fetchApi<any>("/btc/escrow/build-dispute-claim", { method: "POST", body: JSON.stringify({ tradeId }) }),
+    coSignCancel: (tradeId: string, psbtBase64: string) =>
+      fetchApi<any>("/btc/escrow/cosign-cancel", { method: "POST", body: JSON.stringify({ tradeId, psbtBase64 }) }),
+    getBalance: (address: string) =>
+      fetchApi<{ btc: number }>(`/btc/balance/${address}`),
+    getAdminPubkey: () =>
+      fetchApi<{ pubkey: string }>("/btc/admin-pubkey"),
+  },
+
+  prices: {
+    getAll: () => fetchApi<Record<string, number>>("/prices"),
+  },
+
+  notifications: {
+    getRecent: () => fetchApi<any[]>("/notifications"),
+    getUnreadCount: () => fetchApi<{ count: number }>("/notifications/unread-count"),
+    markRead: () => fetchApi<any>("/notifications/mark-read", { method: "POST" }),
+  },
+
+  disputes: {
+    getByTrade: (tradeId: string) => fetchApi<any>(`/disputes/trade/${tradeId}`),
+
+    uploadScreenshot: async (disputeId: string, file: File) => {
+      const formData = new FormData();
+      formData.append("screenshot", file);
+      const accessToken = localStorage.getItem("merlink_tokens")
+        ? JSON.parse(localStorage.getItem("merlink_tokens")!).accessToken
+        : null;
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1"}/disputes/${disputeId}/evidence`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: formData,
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: { message: "Upload failed" } }));
+        throw new Error(err?.error?.message || "Upload failed");
+      }
+      return res.json().then((d) => d.data);
+    },
+
+    uploadText: (disputeId: string, content: string) =>
+      fetchApi<any>(`/disputes/${disputeId}/evidence/text`, {
+        method: "POST",
+        body: JSON.stringify({ content }),
+      }),
+
+    // Admin
+    sendAdminMessage: (tradeId: string, content: string) =>
+      fetchApi<any>(`/disputes/admin/${tradeId}/chat`, {
+        method: "POST",
+        body: JSON.stringify({ content }),
+      }),
+
+    getOpen: () => fetchApi<any[]>("/disputes/admin/open"),
+
+    resolve: (disputeId: string, resolution: "RELEASE_TO_BUYER" | "REFUND_TO_SELLER", note?: string) =>
+      fetchApi<any>(`/disputes/admin/${disputeId}/resolve`, {
+        method: "POST",
+        body: JSON.stringify({ resolution, note }),
+      }),
+  },
+
+  reviews: {
+    create: (data: { tradeId: string; rating: number; comment?: string }) =>
+      fetchApi<any>("/reviews", { method: "POST", body: JSON.stringify(data) }),
+    getForTrade: (tradeId: string) =>
+      fetchApi<any[]>(`/reviews/trade/${tradeId}`),
+    hasReviewed: (tradeId: string) =>
+      fetchApi<{ reviewed: boolean }>(`/reviews/check/${tradeId}`),
+  },
+
+  offers: {
+    create: (data: { buyRequestId: string; price: number; tradeType: string }) =>
+      fetchApi<any>("/offers", { method: "POST", body: JSON.stringify(data) }),
+
+    getForBuyRequest: (buyRequestId: string) =>
+      fetchApi<any[]>(`/offers/buy-request/${buyRequestId}`),
+
+    accept: (offerId: string) =>
+      fetchApi<any>(`/offers/${offerId}/accept`, { method: "POST" }),
+
+    decline: (offerId: string) =>
+      fetchApi<any>(`/offers/${offerId}/decline`, { method: "POST" }),
+  },
+
+  trades: {
+    create: (data: {
+      listingId?: string;
+      buyRequestId?: string;
+      amount: number;
+      paymentMethod: string;
+      tradeType: string;
+    }) =>
+      fetchApi("/trades", { method: "POST", body: JSON.stringify(data) }),
+
+    getPendingCount: () =>
+      fetchApi<{ count: number }>("/trades/pending-count"),
+
+    getMine: (params?: { status?: string; page?: string; pageSize?: string }) => {
+      const query = params ? "?" + new URLSearchParams(params).toString() : "";
+      return fetchApi<{ trades: any[]; total: number; page: number; pageSize: number; hasMore: boolean }>(
+        `/trades${query}`
+      );
+    },
+
+    getById: (tradeId: string) => fetchApi<any>(`/trades/${tradeId}`),
+
+    confirmEscrow: (tradeId: string, escrowTxSignature: string) =>
+      fetchApi(`/trades/${tradeId}/escrow`, {
+        method: "POST",
+        body: JSON.stringify({ escrowTxSignature }),
+      }),
+
+    markPaymentSent: (tradeId: string) =>
+      fetchApi(`/trades/${tradeId}/payment-sent`, { method: "POST" }),
+
+    confirmRelease: (tradeId: string) =>
+      fetchApi(`/trades/${tradeId}/release`, { method: "POST" }),
+
+    cancel: (tradeId: string) =>
+      fetchApi(`/trades/${tradeId}/cancel`, { method: "POST" }),
+
+    openDispute: (tradeId: string, reason: string) =>
+      fetchApi(`/trades/${tradeId}/dispute`, {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      }),
   },
 };
 

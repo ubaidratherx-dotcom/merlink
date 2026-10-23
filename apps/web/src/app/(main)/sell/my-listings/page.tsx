@@ -215,7 +215,7 @@ export default function MyListingsPage() {
               </div>
 
               <div className={styles.listingRange}>
-                ${listing.minAmount.toLocaleString()} - ${listing.maxAmount.toLocaleString()}
+                {listing.minAmount} - {listing.maxAmount} {listing.asset}
               </div>
 
               <div className={styles.listingPayments}>

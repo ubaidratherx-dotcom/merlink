@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
+const isCapacitor = process.env.CAPACITOR_BUILD === 'true';
+
 const nextConfig = {
+  // Static export for Capacitor native builds
+  ...(isCapacitor && { output: 'export' }),
   transpilePackages: [
     "@merlink/types",
     "@merlink/utils",
@@ -14,6 +18,18 @@ const nextConfig = {
         hostname: "**",
       },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:4000/api/:path*",
+      },
+      {
+        source: "/uploads/:path*",
+        destination: "http://localhost:4000/uploads/:path*",
+      },
+    ];
   },
   webpack: (config) => {
     // Fix for EMFILE errors with large node_modules

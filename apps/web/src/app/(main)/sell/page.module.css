@@ -273,7 +273,35 @@
 }
 
 .inputWithPrefix {
-  padding-left: 36px;
+  padding-left: 58px;
+}
+
+.paymentInstructionsInput {
+  width: 100%;
+  padding: var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.paymentInstructionsInput:focus {
+  outline: none;
+  border-color: #7B5EFF;
+}
+
+.paymentInstructionsInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.paymentInstructionsHint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
 }
 
 .inputRow {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/auth.store";
@@ -15,6 +15,19 @@ export default function ProfilePage() {
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [notificationsOn, setNotificationsOn] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("merlink_notif_enabled") !== "off";
+  });
+
+  // Refresh kycStatus from server on mount so we always show the latest
+  useEffect(() => {
+    api.kyc.getStatus().then((data) => {
+      if (data.kycStatus !== user?.kycStatus) {
+        updateUser({ kycStatus: data.kycStatus as import("@merlink/types").KycStatus });
+      }
+    }).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const kycStatus = user?.kycStatus || "UNVERIFIED";
   const accountStatus = user?.accountStatus || "UNVERIFIED";
@@ -112,7 +125,8 @@ export default function ProfilePage() {
     },
     {
       label: "Notifications",
-      href: "/profile/notifications",
+      href: "#notifications",
+      isToggle: true,
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -220,8 +234,16 @@ export default function ProfilePage() {
               KYC Verified
             </span>
           ) : kycStatus === "PENDING" ? (
-            <span className={`${styles.badge} ${styles.badgeAmber}`}>
+            <Link href="/kyc" className={`${styles.badge} ${styles.badgeAmber}`}>
               KYC Pending
+            </Link>
+          ) : kycStatus === "REJECTED" ? (
+            <Link href="/kyc" className={`${styles.badge} ${styles.badgeRed}`}>
+              KYC Rejected
+            </Link>
+          ) : kycStatus === "PERMANENTLY_REJECTED" ? (
+            <span className={`${styles.badge} ${styles.badgeRed}`}>
+              KYC Rejected
             </span>
           ) : (
             <Link href="/kyc" className={`${styles.badge} ${styles.badgePrompt}`}>
@@ -253,17 +275,35 @@ export default function ProfilePage() {
 
       {/* Settings */}
       <div className={styles.settingsSection}>
-        {settingsItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={styles.settingsItem}
-          >
-            <span className={styles.settingsIcon}>{item.icon}</span>
-            <span className={styles.settingsLabel}>{item.label}</span>
-            {"suffix" in item && item.suffix ? item.suffix : null}
-            <span className={styles.settingsChevron}>{chevronIcon}</span>
+        {settingsItems.map((item: any) => (
+          (item as any).isToggle ? (
+            <div key={item.label} className={styles.settingsItem} style={{ cursor: "default" }}>
+              <span className={styles.settingsIcon}>{item.icon}</span>
+              <span className={styles.settingsLabel}>{item.label}</span>
+              <button
+                className={`${styles.toggle} ${notificationsOn ? styles.toggleOn : ""}`}
+                onClick={() => {
+                  const next = !notificationsOn;
+                  setNotificationsOn(next);
+                  localStorage.setItem("merlink_notif_enabled", next ? "on" : "off");
+                }}
+                aria-label="Toggle notifications"
+              >
+                <span className={styles.toggleThumb} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={styles.settingsItem}
+            >
+              <span className={styles.settingsIcon}>{item.icon}</span>
+              <span className={styles.settingsLabel}>{item.label}</span>
+              {"suffix" in item && item.suffix ? item.suffix : null}
+              <span className={styles.settingsChevron}>{chevronIcon}</span>
           </Link>
+          )
         ))}
       </div>
 

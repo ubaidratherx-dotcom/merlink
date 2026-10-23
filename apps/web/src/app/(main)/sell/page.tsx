@@ -26,15 +26,17 @@ export default function SellPage() {
   const hasWallet = !!(user?.walletAddress && user?.walletVerified);
   const sellerMode = !!user?.sellerMode;
 
-  const [asset, setAsset] = useState<"USDC" | "SOL">("USDC");
+  const [asset, setAsset] = useState<"USDC" | "USDT" | "SOL" | "ETH" | "BTC">("USDC");
+  const [chain, setChain] = useState<"solana" | "ethereum">("solana");
   const [priceType, setPriceType] = useState<PriceType>("fixed");
   const [priceValue, setPriceValue] = useState("");
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
   const [tradeType, setTradeType] = useState<"IN_PERSON" | "REMOTE" | "BOTH">("BOTH");
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [paymentInstructions, setPaymentInstructions] = useState("");
 
-  const [balance, setBalance] = useState<{ sol: number; usdc: number } | null>(null);
+  const [balance, setBalance] = useState<Record<string, number> | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -42,24 +44,40 @@ export default function SellPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Auto-set chain based on asset (SOL → solana, ETH → ethereum, USDC/USDT → user picks)
+  const needsChainPicker = asset === "USDC"; // only USDC exists on both chains
+  const effectiveChain = asset === "SOL" ? "solana" : asset === "ETH" || asset === "USDT" ? "ethereum" : asset === "BTC" ? "bitcoin" : chain;
+  const isEthChain = effectiveChain === "ethereum";
+  const isBtcChain = effectiveChain === "bitcoin";
+  const hasEthWallet = !!user?.ethWalletAddress;
+  const hasBtcWallet = !!user?.btcAddress;
+
   const fetchBalance = useCallback(async () => {
-    if (!hasWallet) return;
+    if (!hasWallet && !hasEthWallet && !hasBtcWallet) return;
     setBalanceLoading(true);
     try {
-      const data = await api.wallet.getBalance();
-      setBalance(data);
+      if (isBtcChain && hasBtcWallet) {
+        const btcData = await api.wallet.btcGetBalance();
+        setBalance(btcData); // { btc }
+      } else if (isEthChain && hasEthWallet) {
+        const ethData = await api.wallet.ethGetBalance();
+        setBalance(ethData); // { eth, usdc, usdt }
+      } else if (hasWallet) {
+        const data = await api.wallet.getBalance();
+        setBalance(data); // { sol, usdc }
+      }
     } catch {
       // silently fail
     } finally {
       setBalanceLoading(false);
     }
-  }, [hasWallet]);
+  }, [hasWallet, hasEthWallet, hasBtcWallet, isEthChain, isBtcChain]);
 
   useEffect(() => {
-    if (hasWallet && sellerMode) {
+    if ((hasWallet || hasEthWallet || hasBtcWallet) && sellerMode) {
       fetchBalance();
     }
-  }, [hasWallet, sellerMode, fetchBalance]);
+  }, [hasWallet, hasEthWallet, hasBtcWallet, sellerMode, fetchBalance, effectiveChain]);
 
   function togglePayment(value: string) {
     setSelectedPayments((prev) =>
@@ -86,17 +104,23 @@ export default function SellPage() {
   const parsedMin = parseFloat(minAmount) || 0;
   const parsedMax = parseFloat(maxAmount) || 0;
 
+  const currentBalance = balance
+    ? asset === "SOL" ? (balance.sol ?? 0)
+      : asset === "ETH" ? (balance.eth ?? 0)
+      : asset === "USDC" ? (balance.usdc ?? 0)
+      : asset === "USDT" ? (balance.usdt ?? 0)
+      : asset === "BTC" ? (balance.btc ?? 0)
+      : 0
+    : null;
+
+  const exceedsBalance = currentBalance !== null && parsedMax > 0 && parsedMax > currentBalance;
+
   const isFormValid =
     parsedPrice > 0 &&
     parsedMin > 0 &&
     parsedMax > parsedMin &&
-    selectedPayments.length > 0;
-
-  const currentBalance = balance
-    ? asset === "USDC"
-      ? balance.usdc
-      : balance.sol
-    : null;
+    selectedPayments.length > 0 &&
+    !exceedsBalance;
 
   const showLowLiquidity =
     currentBalance !== null && parsedMin > 0 && currentBalance < parsedMin;
@@ -109,12 +133,14 @@ export default function SellPage() {
     try {
       await api.listings.create({
         asset,
+        chain: effectiveChain,
         priceType: priceType === "fixed" ? "FIXED" : priceType === "market_plus" ? "MARKET_PLUS" : "MARKET_MINUS",
         priceValue: parsedPrice,
         minAmount: parsedMin,
         maxAmount: parsedMax,
         paymentMethods: selectedPayments,
         tradeType,
+        ...(paymentInstructions.trim() && { paymentInstructions: paymentInstructions.trim() }),
       });
       setSuccess(true);
       setTimeout(() => {
@@ -150,7 +176,7 @@ export default function SellPage() {
   }
 
   /* Gate 2: No wallet connected */
-  if (!hasWallet) {
+  if (!hasWallet && !hasEthWallet && !hasBtcWallet) {
     return (
       <div className={styles.container}>
         <div className={styles.gateCard}>
@@ -162,7 +188,7 @@ export default function SellPage() {
           </div>
           <h2 className={styles.gateTitle}>Connect your wallet</h2>
           <p className={styles.gateSubtitle}>
-            Link and verify a Solana wallet to hold your listing liquidity
+            Link and verify a wallet to hold your listing liquidity
           </p>
           <Link href="/profile/wallet" className={styles.gateButton}>
             Connect Wallet
@@ -249,22 +275,47 @@ export default function SellPage() {
         <div className={styles.fieldGroup}>
           <label className={styles.fieldLabel}>Asset</label>
           <div className={styles.pillToggle}>
-            <button
-              type="button"
-              className={`${styles.pill} ${asset === "USDC" ? styles.pillActive : ""}`}
-              onClick={() => setAsset("USDC")}
-            >
-              USDC
-            </button>
-            <button
-              type="button"
-              className={`${styles.pill} ${asset === "SOL" ? styles.pillActive : ""}`}
-              onClick={() => setAsset("SOL")}
-            >
-              SOL
-            </button>
+            {(["USDC", "USDT", "SOL", "ETH", "BTC"] as const).map((a) => (
+              <button
+                key={a}
+                type="button"
+                className={`${styles.pill} ${asset === a ? styles.pillActive : ""}`}
+                onClick={() => { setAsset(a); setBalance(null); }}
+              >
+                {a}
+              </button>
+            ))}
           </div>
         </div>
+
+        {/* Chain Picker — only for USDC/USDT/BTC */}
+        {needsChainPicker && (
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Chain</label>
+            <div className={styles.pillToggle}>
+              <button
+                type="button"
+                className={`${styles.pill} ${chain === "solana" ? styles.pillActive : ""}`}
+                onClick={() => setChain("solana")}
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#9945FF" opacity="0.2"/><circle cx="12" cy="12" r="5" fill="#9945FF"/></svg>
+                  Solana
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.pill} ${chain === "ethereum" ? styles.pillActive : ""}`}
+                onClick={() => setChain("ethereum")}
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 1.5l-7 11.5 7 4 7-4L12 1.5z" fill="#627EEA" opacity="0.6"/><path d="M12 1.5v9.87l7 3.13L12 1.5z" fill="#627EEA"/></svg>
+                  Ethereum
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Price Type */}
         <div className={styles.fieldGroup}>
@@ -317,28 +368,30 @@ export default function SellPage() {
         {/* Min / Max */}
         <div className={styles.inputRow}>
           <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Min Amount</label>
+            <label className={styles.fieldLabel}>Min Amount ({asset})</label>
             <div className={styles.inputWrapper}>
-              <span className={styles.inputPrefix}>$</span>
+              <span className={styles.inputPrefix}>{asset}</span>
               <input
                 type="number"
                 className={`${styles.input} ${styles.inputWithPrefix}`}
-                placeholder="10"
+                placeholder={asset === "SOL" ? "0.1" : "10"}
                 min="0"
+                step="any"
                 value={minAmount}
                 onChange={(e) => setMinAmount(e.target.value)}
               />
             </div>
           </div>
           <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Max Amount</label>
+            <label className={styles.fieldLabel}>Max Amount ({asset})</label>
             <div className={styles.inputWrapper}>
-              <span className={styles.inputPrefix}>$</span>
+              <span className={styles.inputPrefix}>{asset}</span>
               <input
                 type="number"
                 className={`${styles.input} ${styles.inputWithPrefix}`}
-                placeholder="1,000"
+                placeholder={asset === "SOL" ? "10" : "1000"}
                 min="0"
+                step="any"
                 value={maxAmount}
                 onChange={(e) => setMaxAmount(e.target.value)}
               />
@@ -347,6 +400,11 @@ export default function SellPage() {
         </div>
         {parsedMax > 0 && parsedMin > 0 && parsedMax <= parsedMin && (
           <p className={styles.validationError}>Max amount must be greater than min amount</p>
+        )}
+        {exceedsBalance && (
+          <p className={styles.validationError}>
+            Max amount ({parsedMax} {asset}) exceeds your wallet balance ({currentBalance?.toFixed(asset === "BTC" ? 8 : 4)} {asset})
+          </p>
         )}
 
         {/* Payment Methods */}
@@ -394,6 +452,24 @@ export default function SellPage() {
               Both
             </button>
           </div>
+        </div>
+
+        {/* Payment Instructions */}
+        <div className={styles.fieldGroup}>
+          <label className={styles.fieldLabel}>
+            Payment Instructions (Optional)
+          </label>
+          <textarea
+            className={styles.paymentInstructionsInput}
+            placeholder="e.g., Bank: ABC Bank, Account: 1234567890, Name: John Doe"
+            value={paymentInstructions}
+            onChange={(e) => setPaymentInstructions(e.target.value)}
+            maxLength={500}
+            rows={3}
+          />
+          <span className={styles.paymentInstructionsHint}>
+            Buyers will see this after escrow is locked so they know where to send payment
+          </span>
         </div>
 
         {/* Liquidity Display */}

@@ -297,6 +297,39 @@
   margin-bottom: 32px;
 }
 
+/* Rejection reason box */
+.rejectionReason {
+  background: var(--danger-bg);
+  border: 1px solid rgba(255, 69, 58, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  max-width: 400px;
+  width: 100%;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.rejectionReasonLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--alert-red);
+  margin-bottom: 6px;
+}
+
+.rejectionReasonText {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.retriesLeft {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-bottom: 24px;
+}
+
 /* Rejected State */
 .rejectedIcon {
   width: 72px;

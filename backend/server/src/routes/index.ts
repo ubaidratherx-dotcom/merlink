@@ -10,6 +10,10 @@ import kycRouter from "./kyc.routes";
 import emailRouter from "./email.routes";
 import uploadRouter from "./upload.routes";
 import walletRouter from "./wallet.routes";
+import offersRouter from "./offers.routes";
+import disputesRouter from "./disputes.routes";
+import notificationsRouter from "./notifications.routes";
+import btcRouter from "./btc.routes";
 
 export const apiRouter = Router();
 
@@ -24,3 +28,18 @@ apiRouter.use("/kyc", kycRouter);
 apiRouter.use("/email", emailRouter);
 apiRouter.use("/upload", uploadRouter);
 apiRouter.use("/wallet", walletRouter);
+apiRouter.use("/offers", offersRouter);
+apiRouter.use("/disputes", disputesRouter);
+apiRouter.use("/notifications", notificationsRouter);
+apiRouter.use("/btc", btcRouter);
+
+// Price feed
+apiRouter.get("/prices", async (_req, res, next) => {
+  try {
+    const { priceService } = await import("../services/price.service");
+    const prices = await priceService.getAllPrices();
+    res.json({ success: true, data: prices });
+  } catch (error) {
+    next(error);
+  }
+});

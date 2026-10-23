@@ -22,12 +22,13 @@ export async function updateProfile(
 ): Promise<void> {
   try {
     const userId = req.user!.userId;
-    const { username, profilePhoto, latitude, longitude } = req.body;
+    const { username, profilePhoto, latitude, longitude, bio } = req.body;
     const user = await userService.updateProfile(userId, {
       username,
       profilePhoto,
       latitude,
       longitude,
+      bio,
     });
     res.json({ success: true, data: user });
   } catch (error) {
