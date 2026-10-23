@@ -14,6 +14,7 @@ import offersRouter from "./offers.routes";
 import disputesRouter from "./disputes.routes";
 import notificationsRouter from "./notifications.routes";
 import btcRouter from "./btc.routes";
+import jobsRouter from "./jobs.routes";
 
 export const apiRouter = Router();
 
@@ -31,6 +32,7 @@ apiRouter.use("/wallet", walletRouter);
 apiRouter.use("/offers", offersRouter);
 apiRouter.use("/disputes", disputesRouter);
 apiRouter.use("/notifications", notificationsRouter);
+apiRouter.use("/jobs", jobsRouter);
 apiRouter.use("/btc", btcRouter);
 
 // Price feed

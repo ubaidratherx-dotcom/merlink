@@ -302,7 +302,7 @@ export default function KycPage() {
               Pending Review
             </span>
             <div className={styles.pendingActions}>
-              <button type="button" className={styles.primaryButton} onClick={() => router.push("/")}>
+              <button type="button" className={styles.primaryButton} onClick={() => router.push("/discover")}>
                 Go to Dashboard
               </button>
             </div>
@@ -333,7 +333,7 @@ export default function KycPage() {
             KYC Verified
           </span>
           <p className={styles.successText}>You&apos;re all set! You can now trade on Merlink.</p>
-          <button type="button" className={styles.primaryButton} onClick={() => router.push("/")}>
+          <button type="button" className={styles.primaryButton} onClick={() => router.push("/discover")}>
             Start Trading
           </button>
         </div>

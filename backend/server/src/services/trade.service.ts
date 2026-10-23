@@ -4,9 +4,8 @@ import { io } from "../socket/index";
 import {
   PROTOCOL_FEE_PERCENTAGE,
   PAYMENT_DEADLINE_HOURS,
-  SELLER_CONFIRMATION_HOURS,
 } from "@merlink/types";
-import type { TradeStatus } from "@prisma/client";
+import type { TradeStatus, SupportedAsset } from "@prisma/client";
 import { notificationService } from "./notification.service";
 
 // ---------------------------------------------------------------------------
@@ -81,7 +80,7 @@ async function transitionTrade(
   // Emit real-time update — broadcast to all connected clients
   const tradeNs = io?.of("/trade");
   if (tradeNs) {
-    tradeNs.emit("trade-update", {
+    tradeNs?.emit("trade-update", {
       tradeId,
       status: toStatus,
       trade: updated,
@@ -224,7 +223,7 @@ async function createTrade(
         sellerId,
         listingId: data.listingId || null,
         buyRequestId: data.buyRequestId || null,
-        asset,
+        asset: asset as SupportedAsset,
         amount: data.amount,
         price,
         paymentMethod: data.paymentMethod as any,
@@ -263,7 +262,7 @@ async function createTrade(
   // Broadcast trade creation
   const tradeNs = io?.of("/trade");
   if (tradeNs) {
-    tradeNs.emit("trade-update", {
+    tradeNs?.emit("trade-update", {
       tradeId: trade.id,
       status: "CREATED",
       trade,
@@ -469,7 +468,7 @@ async function openDispute(
 
   const tradeNs = io?.of("/trade");
   if (tradeNs) {
-    tradeNs.emit("trade-update", {
+    tradeNs?.emit("trade-update", {
       tradeId,
       status: "DISPUTED",
       trade: updated,

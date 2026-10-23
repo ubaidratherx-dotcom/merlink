@@ -48,7 +48,8 @@ router.post("/reset-password", resetPassword);
 router.post("/change-password", authenticate, async (req, res, next) => {
   try {
     const { prisma } = await import("../lib/prisma");
-    const bcrypt = await import("bcrypt");
+    const bcryptMod = await import("bcryptjs");
+    const bcrypt = (bcryptMod as any).default ?? bcryptMod;
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ success: false, error: "currentPassword and newPassword required" });
@@ -134,7 +135,8 @@ router.post("/2fa/login-verify", async (req, res, next) => {
   try {
     const { twoFactorService } = await import("../services/twoFactor.service");
     const { prisma } = await import("../lib/prisma");
-    const { generateTokens } = await import("../services/auth.service");
+    const { authService } = await import("../services/auth.service");
+    const generateTokens = authService.generateTokens;
     const { userId, code } = req.body;
     if (!userId || !code) return res.status(400).json({ success: false, error: "userId and code required" });
 

@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit";
 // General API rate limit
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === "development" ? 1000 : 100,
+  max: process.env.NODE_ENV === "development" ? 1000 : 2000, // the app polls chat, trades and notifications
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: { message: "Too many requests, please try again later", code: "RATE_LIMIT_EXCEEDED" } },

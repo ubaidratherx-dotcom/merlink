@@ -1,25 +1,11 @@
 import { Router } from "express";
 import multer from "multer";
-import path from "path";
-import crypto from "crypto";
 import { authenticate } from "../middleware/auth";
 import { uploadPhoto } from "../controllers/upload.controller";
 
-const uploadsDir = path.resolve(__dirname, "../../uploads");
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = crypto.randomUUID();
-    const ext = path.extname(file.originalname);
-    cb(null, `profile-${uniqueSuffix}${ext}`);
-  },
-});
-
+// Files are kept in memory and then written to the database-backed file store
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5 MB
   },

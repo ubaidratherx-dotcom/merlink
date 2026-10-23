@@ -54,7 +54,7 @@ export default function VerifyOtpPage() {
         const { user, ...tokens } = result as any;
         setTokens({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
         setUser(user);
-        router.push("/");
+        router.push("/discover");
       } catch (err) {
         setApiError(
           err instanceof Error ? err.message : "Invalid code. Please try again.",

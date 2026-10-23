@@ -129,7 +129,7 @@ async function createBuyRequest(userId: string, data: CreateBuyRequestData) {
   // Notify sellers via Socket.io
   const tradeNs = io?.of("/trade");
   if (tradeNs) {
-    tradeNs.emit("new-buy-request", {
+    tradeNs?.emit("new-buy-request", {
       buyRequest: { ...buyRequest, distance: null },
     });
   }

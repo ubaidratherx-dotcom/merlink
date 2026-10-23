@@ -1,4 +1,4 @@
-import { authenticator } from "otplib";
+import { generateSecret as otpGenerateSecret, generateURI, verifySync } from "otplib";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/errorHandler";
 
@@ -13,8 +13,8 @@ async function generateSecret(userId: string) {
   if (!user) throw new AppError("User not found", 404, "NOT_FOUND");
   if (user.twoFactorEnabled) throw new AppError("2FA is already enabled", 400, "ALREADY_ENABLED");
 
-  const secret = authenticator.generateSecret();
-  const otpauth = authenticator.keyuri(user.email || user.username, APP_NAME, secret);
+  const secret = otpGenerateSecret();
+  const otpauth = generateURI({ issuer: APP_NAME, label: user.email || user.username, secret });
   const QRCode = await import("qrcode");
   const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
 
@@ -36,7 +36,7 @@ async function verifyAndEnable(userId: string, code: string) {
   if (!user.twoFactorSecret) throw new AppError("No 2FA setup in progress", 400, "NO_SECRET");
   if (user.twoFactorEnabled) throw new AppError("2FA is already enabled", 400, "ALREADY_ENABLED");
 
-  const isValid = authenticator.verify({ token: code, secret: user.twoFactorSecret });
+  const isValid = verifySync({ token: code, secret: user.twoFactorSecret }).valid;
   if (!isValid) throw new AppError("Invalid code", 400, "INVALID_CODE");
 
   await prisma.user.update({
@@ -51,7 +51,7 @@ async function verifyAndEnable(userId: string, code: string) {
  * Verify a TOTP code during login.
  */
 function verifyCode(secret: string, code: string): boolean {
-  return authenticator.verify({ token: code, secret });
+  return verifySync({ token: code, secret }).valid;
 }
 
 /**
@@ -64,7 +64,7 @@ async function disable(userId: string, code: string) {
     throw new AppError("2FA is not enabled", 400, "NOT_ENABLED");
   }
 
-  const isValid = authenticator.verify({ token: code, secret: user.twoFactorSecret });
+  const isValid = verifySync({ token: code, secret: user.twoFactorSecret }).valid;
   if (!isValid) throw new AppError("Invalid code", 400, "INVALID_CODE");
 
   await prisma.user.update({

@@ -10,6 +10,9 @@ import styles from "./page.module.css";
 
 type Tab = "phone" | "email";
 
+// Phone sign-in needs an SMS provider (Twilio); hidden until NEXT_PUBLIC_PHONE_AUTH=true
+const PHONE_AUTH = process.env.NEXT_PUBLIC_PHONE_AUTH === "true";
+
 interface FieldErrors {
   phone?: string;
   username?: string;
@@ -22,7 +25,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { setUser, setTokens, setPhone } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<Tab>("phone");
+  const [activeTab, setActiveTab] = useState<Tab>(PHONE_AUTH ? "phone" : "email");
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -110,7 +113,7 @@ export default function RegisterPage() {
           setTokens({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
         }
         setUser(user);
-        router.push("/");
+        router.push("/discover");
       }
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Something went wrong");
@@ -123,30 +126,32 @@ export default function RegisterPage() {
     <>
       <h2 className={styles.heading}>Create your account</h2>
 
-      <div className={styles.tabToggle}>
-        <button
-          type="button"
-          className={`${styles.tab} ${activeTab === "phone" ? styles.tabActive : ""}`}
-          onClick={() => {
-            setActiveTab("phone");
-            setFieldErrors({});
-            setApiError("");
-          }}
-        >
-          Phone
-        </button>
-        <button
-          type="button"
-          className={`${styles.tab} ${activeTab === "email" ? styles.tabActive : ""}`}
-          onClick={() => {
-            setActiveTab("email");
-            setFieldErrors({});
-            setApiError("");
-          }}
-        >
-          Email
-        </button>
-      </div>
+      {PHONE_AUTH && (
+        <div className={styles.tabToggle}>
+          <button
+            type="button"
+            className={`${styles.tab} ${activeTab === "phone" ? styles.tabActive : ""}`}
+            onClick={() => {
+              setActiveTab("phone");
+              setFieldErrors({});
+              setApiError("");
+            }}
+          >
+            Phone
+          </button>
+          <button
+            type="button"
+            className={`${styles.tab} ${activeTab === "email" ? styles.tabActive : ""}`}
+            onClick={() => {
+              setActiveTab("email");
+              setFieldErrors({});
+              setApiError("");
+            }}
+          >
+            Email
+          </button>
+        </div>
+      )}
 
       {apiError && (
         <ErrorBanner message={apiError} onDismiss={() => setApiError("")} />

@@ -107,7 +107,7 @@ export default function MessagesPage() {
           </svg>
           <p className={styles.emptyTitle}>No messages yet</p>
           <p className={styles.emptySub}>Start a trade to begin chatting</p>
-          <Link href="/" className={styles.emptyBtn}>Browse Marketplace</Link>
+          <Link href="/discover" className={styles.emptyBtn}>Browse Marketplace</Link>
         </div>
       </div>
     );

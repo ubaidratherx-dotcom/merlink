@@ -3,22 +3,11 @@ import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/requireAdmin";
 import * as disputeCtrl from "../controllers/dispute.controller";
 import multer from "multer";
-import path from "path";
-import { v4 as uuid } from "uuid";
+import { fileStoreService } from "../services/fileStore.service";
 
-// Multer for evidence screenshots
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, path.resolve(__dirname, "../../uploads/evidence"));
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${uuid()}${ext}`);
-  },
-});
-
+// Multer for evidence screenshots (kept in memory, then saved to the file store)
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (_req, file, cb) => {
     const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -40,15 +29,18 @@ router.post(
   "/:disputeId/evidence",
   authenticate,
   upload.single("screenshot"),
-  (req, res, next) => {
+  async (req, res, next) => {
     if (!req.file) {
       res.status(400).json({ error: { message: "No file uploaded", code: "NO_FILE" } });
       return;
     }
-    req.body.type = "screenshot";
-    const host = `http://localhost:${process.env.PORT || 4000}`;
-    req.body.content = `${host}/uploads/evidence/${req.file.filename}`;
-    next();
+    try {
+      req.body.type = "screenshot";
+      req.body.content = await fileStoreService.save(req.file.buffer, req.file.mimetype);
+      next();
+    } catch (err) {
+      next(err);
+    }
   },
   disputeCtrl.uploadEvidence
 );

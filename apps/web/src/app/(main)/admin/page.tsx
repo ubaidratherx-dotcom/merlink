@@ -145,7 +145,7 @@ export default function AdminDashboard() {
             <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>View and resolve open cases</div>
           </button>
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/discover")}
             style={{ padding: 16, background: "var(--surface-card)", border: "1px solid var(--border)", borderRadius: 12, textAlign: "left" }}
           >
             <div style={{ fontSize: 14, fontWeight: 600 }}>Marketplace</div>

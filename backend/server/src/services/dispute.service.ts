@@ -129,7 +129,7 @@ async function resolveDispute(
   // Notify both parties
   const tradeNs = io?.of("/trade");
   if (tradeNs) {
-    tradeNs.emit("dispute-resolved", {
+    tradeNs?.emit("dispute-resolved", {
       tradeId: dispute.tradeId,
       resolution,
       buyerId: dispute.trade.buyerId,

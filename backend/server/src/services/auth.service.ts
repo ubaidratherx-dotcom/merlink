@@ -2,6 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sanitizeUsername } from "@merlink/utils";
+import { smsService } from "./sms.service";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/errorHandler";
 import type { JwtPayload } from "../middleware/auth";
@@ -204,7 +205,7 @@ async function loginWithPhone(phone: string) {
     },
   });
 
-  console.log(`[DEV OTP] Phone: ${phone}, Code: ${code}`);
+  await smsService.sendOtp(phone, code);
 
   return { message: "OTP sent" };
 }
@@ -231,7 +232,7 @@ async function sendOtp(phone: string) {
     },
   });
 
-  console.log(`[DEV OTP] Phone: ${phone}, Code: ${code}`);
+  await smsService.sendOtp(phone, code);
 
   return { message: "OTP sent" };
 }

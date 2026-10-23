@@ -47,7 +47,7 @@ export default function MainError({
           Try Again
         </button>
         <a
-          href="/"
+          href="/discover"
           style={{
             padding: "10px 24px", borderRadius: 10,
             background: "var(--bg-secondary)", color: "var(--text-secondary)",

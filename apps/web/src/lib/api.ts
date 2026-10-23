@@ -269,6 +269,7 @@ export const api = {
       maxAmount: number;
       paymentMethods: string[];
       tradeType: string;
+      chain?: string;
     }) =>
       fetchApi("/listings", { method: "POST", body: JSON.stringify(data) }),
     update: (listingId: string, data: Record<string, unknown>) =>

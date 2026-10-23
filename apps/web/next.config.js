@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const isCapacitor = process.env.CAPACITOR_BUILD === 'true';
+// Where /api and /uploads are proxied to (the Express API). Set API_ORIGIN in production.
+const apiOrigin = (process.env.API_ORIGIN || 'http://localhost:4000').replace(/\/$/, '');
 
 const nextConfig = {
   // Static export for Capacitor native builds
@@ -23,11 +25,11 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:4000/api/:path*",
+        destination: `${apiOrigin}/api/:path*`,
       },
       {
         source: "/uploads/:path*",
-        destination: "http://localhost:4000/uploads/:path*",
+        destination: `${apiOrigin}/uploads/:path*`,
       },
     ];
   },

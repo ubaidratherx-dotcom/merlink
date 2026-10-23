@@ -135,7 +135,7 @@ export default function TradesPage() {
               : "Your completed trades will appear here"}
           </p>
           {activeTab === "active" && (
-            <Link href="/" className={styles.emptyButton}>
+            <Link href="/discover" className={styles.emptyButton}>
               Browse Marketplace
             </Link>
           )}

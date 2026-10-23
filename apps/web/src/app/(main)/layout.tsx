@@ -10,7 +10,7 @@ import { useNotificationStore, isNotificationsEnabled } from "@/stores/notificat
 import styles from "./layout.module.css";
 
 const routeTitles: Record<string, string> = {
-  "/": "Discover",
+  "/discover": "Discover",
   "/trades": "Trades",
   "/sell": "Create Listing",
   "/messages": "Messages",
@@ -22,7 +22,7 @@ function getTitle(pathname: string): string {
   if (routeTitles[pathname]) return routeTitles[pathname];
   // Check prefix matches for sub-routes
   for (const [route, title] of Object.entries(routeTitles)) {
-    if (route !== "/" && pathname.startsWith(route)) return title;
+    if (pathname.startsWith(route)) return title;
   }
   return "";
 }
@@ -58,6 +58,12 @@ export default function MainLayout({
 
     // Prevent duplicate connections
     if (socketRef.current?.connected) return;
+
+    // Serverless API hosts have no websocket server: poll for notifications instead
+    if (process.env.NEXT_PUBLIC_WS_URL === "off") {
+      const poll = setInterval(() => hydrateNotifications(), 30000);
+      return () => clearInterval(poll);
+    }
 
     let socket: any = null;
     let cancelled = false;

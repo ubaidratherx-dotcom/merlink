@@ -52,7 +52,7 @@ async function createOffer(
   // Notify buyer via Socket.io
   const tradeNs = io?.of("/trade");
   if (tradeNs) {
-    tradeNs.emit("new-offer", {
+    tradeNs?.emit("new-offer", {
       offer: {
         ...offer,
         buyRequest: {
@@ -199,7 +199,7 @@ async function acceptOffer(offerId: string, buyerId: string) {
   // Notify seller their offer was accepted
   const tradeNs = io?.of("/trade");
   if (tradeNs) {
-    tradeNs.emit("offer-accepted", {
+    tradeNs?.emit("offer-accepted", {
       offerId,
       sellerId: offer.sellerId,
       buyerUsername: newTrade.buyer?.username,
@@ -241,7 +241,7 @@ async function declineOffer(offerId: string, buyerId: string) {
   // Notify seller their offer was declined
   const tradeNs = io?.of("/trade");
   if (tradeNs) {
-    tradeNs.emit("offer-declined", {
+    tradeNs?.emit("offer-declined", {
       offerId: offer.id,
       sellerId: offer.sellerId,
       buyerUsername: updated.buyRequest.buyer.username,

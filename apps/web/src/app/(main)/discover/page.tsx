@@ -735,7 +735,7 @@ export default function DiscoverPage() {
                           )}
                         </div>
                         <div className={styles.listingMeta}>
-                          <span className={`${styles.assetBadge} ${listing.asset === "USDC" ? styles.assetBadgeUsdc : listing.asset === "ETH" ? styles.assetBadgeUsdc : styles.assetBadgeSol}`}>
+                          <span className={`${styles.assetBadge} ${(listing.asset as string) === "USDC" ? styles.assetBadgeUsdc : (listing.asset as string) === "ETH" ? styles.assetBadgeUsdc : styles.assetBadgeSol}`}>
                             {listing.asset}
                           </span>
                           <span style={{ fontSize: 10, padding: "1px 5px", borderRadius: 20, background: (listing as any).chain === "ethereum" ? "rgba(98,126,234,0.1)" : (listing as any).chain === "bitcoin" ? "rgba(247,147,26,0.1)" : "rgba(153,69,255,0.1)", color: (listing as any).chain === "ethereum" ? "#627EEA" : (listing as any).chain === "bitcoin" ? "#F7931A" : "#9945FF", fontWeight: 700 }}>

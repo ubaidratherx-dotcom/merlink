@@ -41,3 +41,10 @@ backend/server/uploads/
 # Solana
 target/
 .anchor/
+
+# Production secrets for Vercel (never commit)
+deploy/api-production.env
+.vercel
+
+# TypeScript incremental build info
+*.tsbuildinfo

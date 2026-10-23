@@ -2,6 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/errorHandler";
+import { emailService } from "./email.service";
 
 // ---------------------------------------------------------------------------
 // Request password reset
@@ -26,10 +27,7 @@ async function requestPasswordReset(email: string) {
     },
   });
 
-  // In production, send an actual email. For MVP dev, console.log the link.
-  console.log(
-    `[DEV EMAIL] Password reset link: http://localhost:3000/reset-password?token=${token}`
-  );
+  await emailService.sendPasswordResetEmail(user.email as string, token);
 
   return { message: "If an account with that email exists, a reset link has been sent" };
 }

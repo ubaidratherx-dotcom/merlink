@@ -8,7 +8,7 @@ import { api } from "@/lib/api";
 import styles from "./BottomTabBar.module.css";
 
 const tabs = [
-  { key: "discover", label: "Discover", href: "/" },
+  { key: "discover", label: "Discover", href: "/discover" },
   { key: "trades", label: "Trades", href: "/trades" },
   { key: "sell", label: "Sell", href: "/sell" },
   { key: "messages", label: "Messages", href: "/messages" },
@@ -16,7 +16,7 @@ const tabs = [
 ] as const;
 
 function isActive(href: string, pathname: string): boolean {
-  if (href === "/") return pathname === "/";
+  if (href === "/discover") return pathname === "/discover";
   return pathname.startsWith(href);
 }
 

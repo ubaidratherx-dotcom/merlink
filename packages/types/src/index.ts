@@ -17,6 +17,8 @@ export interface User {
   kycStatus: KycStatus;
   walletAddress: string | null;
   walletVerified: boolean;
+  ethWalletAddress?: string | null;
+  btcAddress?: string | null;
   sellerMode: boolean;
   latitude: number | null;
   longitude: number | null;
