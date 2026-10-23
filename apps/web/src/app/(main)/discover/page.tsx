@@ -113,11 +113,12 @@ export default function DiscoverPage() {
   const hasLocation = !!(user?.latitude && user?.longitude);
   const showLocationBanner = !hasLocation;
 
-  // Silently refresh location on mount using Permissions API (only if already granted)
+  // Refresh location on mount. If permission was already granted this is silent;
+  // on a first visit it asks once per session, so Discover centres on the visitor.
   useEffect(() => {
-    if (!navigator.geolocation || !navigator.permissions) return;
-    navigator.permissions.query({ name: "geolocation" }).then((result) => {
-      if (result.state !== "granted") return;
+    if (!navigator.geolocation) return;
+    const askedKey = "merlink_loc_prompted";
+    const locate = () =>
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
@@ -137,9 +138,28 @@ export default function DiscoverPage() {
           }
         },
         () => {},
-        { enableHighAccuracy: true, timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 8000 }
       );
-    }).catch(() => {});
+    const askOnce = () => {
+      try {
+        if (sessionStorage.getItem(askedKey)) return;
+        sessionStorage.setItem(askedKey, "1");
+      } catch {
+        // storage unavailable: still ask
+      }
+      locate();
+    };
+    if (!navigator.permissions) {
+      askOnce();
+      return;
+    }
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then((result) => {
+        if (result.state === "granted") locate();
+        else if (result.state === "prompt") askOnce();
+      })
+      .catch(() => askOnce());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchListings = useCallback(async (radius?: number) => {
@@ -318,10 +338,11 @@ export default function DiscoverPage() {
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
       } catch {
-        // Fallback: IP-based geolocation
-        const geo = await fetch("http://ip-api.com/json/").then((r) => r.json());
-        latitude = geo.lat;
-        longitude = geo.lon;
+        // Fallback: IP-based geolocation (HTTPS, works on the live site)
+        const geo = await fetch("https://ipwho.is/").then((r) => r.json());
+        if (!geo?.success) throw new Error("Could not determine your location");
+        latitude = geo.latitude;
+        longitude = geo.longitude;
       }
 
       const updatedUser = await api.users.updateProfile({

@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { ensureDemoTradersNear } from "./demoTraders.service";
 import { AppError } from "../middleware/errorHandler";
 import { walletService } from "./wallet.service";
 
@@ -374,6 +375,11 @@ const NEXT_TIER: Record<number, number | null> = {
 };
 
 async function getListings(filters: GetListingsFilters) {
+  // Demo mode: make sure the searched location has sample traders around it
+  if (filters.latitude !== undefined && filters.longitude !== undefined) {
+    await ensureDemoTradersNear(filters.latitude, filters.longitude);
+  }
+
   const page = filters.page ?? 1;
   const limit = filters.limit ?? 20;
   const skip = (page - 1) * limit;
