@@ -1,26 +1,36 @@
 /**
- * Demo seeder for video recording.
- *  - Upserts the main account (ubaidratherx@gmail.com / Money@123), KYC-verified so it can trade.
- *  - Seeds a crowd of nearby crypto sellers + active listings clustered around a coordinate.
+ * Demo seeder.
+ *  - Upserts the main demo account (MAIN_EMAIL / MAIN_PASSWORD), KYC-verified so it can trade.
+ *  - Seeds demo sellers (@demo.merlink) with active listings clustered around one or more city
+ *    centres, plus a completed-trade history with reviews so profiles look lived-in.
  *
- * Target coordinate priority:
- *   1. LAT / LNG env vars (explicit override)
- *   2. The main user's profile lat/lng (set by the phone's GPS after they log in & allow location)
+ * Centres (in priority order):
+ *   1. CENTERS="lat,lng,Name;lat,lng,Name"   several cities
+ *   2. LAT / LNG                               one city
+ *   3. The main user's saved location
+ *   4. Default: Dubai, London, New York, Singapore
  *
- * Re-runnable: wipes previously-seeded demo sellers (email domain @demo.merlink) before re-seeding.
+ * Re-runnable: wipes previous demo users and everything attached to them first.
  *
- *   DATABASE_URL=... LAT=.. LNG=.. npx tsx scripts/seed-demo.ts
+ *   DATABASE_URL=... npx tsx scripts/seed-demo.ts
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const MAIN_EMAIL = "ubaidratherx@gmail.com";
-const MAIN_PASSWORD = "Money@123";
+const MAIN_EMAIL = process.env.MAIN_EMAIL || "ubaidratherx@gmail.com";
+const MAIN_PASSWORD = process.env.MAIN_PASSWORD || "Money@123";
 const MAIN_USERNAME = "ubaid";
 const DEMO_DOMAIN = "@demo.merlink";
-const SELLER_COUNT = 30;
+const SELLER_COUNT = parseInt(process.env.SELLER_COUNT || "30", 10);
+
+const DEFAULT_CENTERS = [
+  { lat: 25.2048, lng: 55.2708, name: "Dubai" },
+  { lat: 51.5074, lng: -0.1278, name: "London" },
+  { lat: 40.7128, lng: -74.006, name: "New York" },
+  { lat: 1.3521, lng: 103.8198, name: "Singapore" },
+];
 
 // crypto-flavoured handles for believable trader names
 const HANDLES = [
@@ -44,15 +54,41 @@ const ASSETS = [
 const PAYMENTS = ["BANK_TRANSFER", "CASH", "WISE", "REVOLUT", "MOBILE_MONEY", "PAYPAL"] as const;
 const TRADE_TYPES = ["IN_PERSON", "BOTH", "BOTH", "REMOTE"] as const; // weight toward in-person ("meet")
 
+const BIOS = [
+  "Trusted local {asset} trader. Fast & friendly meetups.",
+  "Buying and selling {asset} around {city} since 2024. Cash or bank, your call.",
+  "{city} based. Quick replies, escrow every time, no drama.",
+  "OTC desk vibes without the desk. {asset} in {city}, same-day.",
+  "Meet at any metro station in {city}. Verified and happy to show ID.",
+];
+
+const COMMENTS = [
+  "Smooth trade, released as soon as the transfer landed.",
+  "Met at the mall, done in ten minutes. Would trade again.",
+  "Quick to reply and very patient with my first trade.",
+  "Exactly as listed. Escrow made it stress free.",
+  "Fair price, fast release. Recommended.",
+  "Bit slow to confirm but all good in the end.",
+  "Great communication throughout.",
+  "Legit trader, no issues at all.",
+];
+
 function rand(min: number, max: number) { return Math.random() * (max - min) + min; }
+function randInt(min: number, max: number) { return Math.floor(rand(min, max + 1)); }
 function pick<T>(arr: readonly T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 function sample<T>(arr: readonly T[], n: number): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a.slice(0, n);
 }
+function jitter(lat: number, lng: number, km: number) {
+  const r = rand(0.3, km) / 111; // degrees
+  const t = rand(0, 2 * Math.PI);
+  return { lat: lat + r * Math.cos(t), lng: lng + (r * Math.sin(t)) / Math.cos((lat * Math.PI) / 180) };
+}
+function daysAgo(days: number) { return new Date(Date.now() - days * 24 * 60 * 60 * 1000); }
 
-// fake but unique-looking base58/hex addresses
+// fake but unique-looking base58 addresses
 function fakeSolAddr(seed: number) {
   const c = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   let s = ""; let x = seed * 2654435761 % 2 ** 31;
@@ -60,73 +96,73 @@ function fakeSolAddr(seed: number) {
   return s;
 }
 
-// offset a coordinate by a random distance (km) and bearing
-function jitter(lat: number, lng: number, maxKm: number) {
-  const distKm = Math.sqrt(Math.random()) * maxKm; // sqrt -> uniform area distribution
-  const bearing = Math.random() * 2 * Math.PI;
-  const dLat = (distKm / 111) * Math.cos(bearing);
-  const dLng = (distKm / (111 * Math.cos((lat * Math.PI) / 180))) * Math.sin(bearing);
-  return { lat: lat + dLat, lng: lng + dLng, distKm };
-}
-
-async function ensureMainUser() {
-  const passwordHash = await bcrypt.hash(MAIN_PASSWORD, 10);
-  // Reuse an existing account by email or by the desired username (repurpose stale test record).
-  const existing = await prisma.user.findFirst({
-    where: { OR: [{ email: MAIN_EMAIL }, { username: MAIN_USERNAME }] },
-  });
-  if (existing) {
-    return prisma.user.update({
-      where: { id: existing.id },
-      data: {
-        email: MAIN_EMAIL,
-        passwordHash,
-        kycStatus: "VERIFIED",
-        accountStatus: "PHONE_VERIFIED",
-        ...(existing.walletAddress ? {} : { walletAddress: fakeSolAddr(99999), walletVerified: true }),
-      },
+function parseCenters(main: { latitude: number | null; longitude: number | null } | null) {
+  if (process.env.CENTERS) {
+    return process.env.CENTERS.split(";").map((part, i) => {
+      const [lat, lng, name] = part.split(",");
+      return { lat: parseFloat(lat), lng: parseFloat(lng), name: (name || `Centre ${i + 1}`).trim() };
     });
   }
-  return prisma.user.create({
-    data: {
-      username: MAIN_USERNAME,
-      email: MAIN_EMAIL,
-      passwordHash,
-      authProvider: "EMAIL",
-      accountStatus: "PHONE_VERIFIED",
-      kycStatus: "VERIFIED",
-      walletAddress: fakeSolAddr(99999),
-      walletVerified: true,
-    },
-  });
+  if (process.env.LAT && process.env.LNG) {
+    return [{ lat: parseFloat(process.env.LAT), lng: parseFloat(process.env.LNG), name: "your area" }];
+  }
+  if (main?.latitude && main?.longitude) {
+    return [{ lat: main.latitude, lng: main.longitude, name: "your area" }];
+  }
+  return DEFAULT_CENTERS;
+}
+
+async function wipeDemoData() {
+  const demoUsers = await prisma.user.findMany({ where: { email: { endsWith: DEMO_DOMAIN } }, select: { id: true } });
+  const ids = demoUsers.map((u) => u.id);
+  if (ids.length === 0) return 0;
+  const trades = await prisma.trade.findMany({ where: { OR: [{ buyerId: { in: ids } }, { sellerId: { in: ids } }] }, select: { id: true } });
+  const tradeIds = trades.map((t) => t.id);
+  if (tradeIds.length) {
+    await prisma.review.deleteMany({ where: { tradeId: { in: tradeIds } } });
+    await prisma.tradeStateLog.deleteMany({ where: { tradeId: { in: tradeIds } } });
+    await prisma.chatMessage.deleteMany({ where: { tradeId: { in: tradeIds } } });
+    await prisma.trade.deleteMany({ where: { id: { in: tradeIds } } });
+  }
+  await prisma.review.deleteMany({ where: { OR: [{ reviewerId: { in: ids } }, { revieweeId: { in: ids } }] } });
+  await prisma.user.deleteMany({ where: { id: { in: ids } } }); // cascades listings
+  return ids.length;
 }
 
 async function main() {
-  const main = await ensureMainUser();
+  // 1) main demo account
+  const passwordHash = await bcrypt.hash(MAIN_PASSWORD, 10);
+  const existing = await prisma.user.findFirst({ where: { OR: [{ email: MAIN_EMAIL }, { username: MAIN_USERNAME }] } });
+  const main = existing
+    ? await prisma.user.update({
+        where: { id: existing.id },
+        data: { email: MAIN_EMAIL, passwordHash, authProvider: "EMAIL", accountStatus: "PHONE_VERIFIED", kycStatus: "VERIFIED", sellerMode: true },
+      })
+    : await prisma.user.create({
+        data: { username: MAIN_USERNAME, email: MAIN_EMAIL, passwordHash, authProvider: "EMAIL", accountStatus: "PHONE_VERIFIED", kycStatus: "VERIFIED", sellerMode: true },
+      });
   console.log(`✓ main account ready: ${MAIN_EMAIL} (id=${main.id}, kyc=${main.kycStatus})`);
 
-  const lat = process.env.LAT ? parseFloat(process.env.LAT) : main.latitude ?? null;
-  const lng = process.env.LNG ? parseFloat(process.env.LNG) : main.longitude ?? null;
-
-  if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng)) {
-    console.log("\n⚠  No location yet for the main account.");
-    console.log("   → Log in on the phone with the creds above and tap ALLOW when it asks for location.");
-    console.log("   → Then re-run this script (it will read your GPS coords and seed sellers around you).");
-    console.log("   → Or pass coords explicitly:  LAT=.. LNG=.. npx tsx scripts/seed-demo.ts");
-    return;
+  const centers = parseCenters(main);
+  if (!main.latitude || !main.longitude) {
+    await prisma.user.update({ where: { id: main.id }, data: { latitude: centers[0].lat, longitude: centers[0].lng } });
+    console.log(`  main account location defaulted to ${centers[0].name}`);
   }
-  console.log(`✓ seeding ${SELLER_COUNT} sellers around (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
 
-  // wipe previous demo sellers (cascade deletes their listings)
-  const wiped = await prisma.user.deleteMany({ where: { email: { endsWith: DEMO_DOMAIN } } });
-  if (wiped.count) console.log(`  cleared ${wiped.count} previous demo sellers`);
+  // 2) wipe previous demo data
+  const wiped = await wipeDemoData();
+  if (wiped) console.log(`  cleared ${wiped} previous demo sellers (and their trades, reviews, listings)`);
 
-  let created = 0;
+  // 3) sellers + listings, round-robin across the centres
+  console.log(`✓ seeding ${SELLER_COUNT} sellers across ${centers.map((c) => c.name).join(", ")}`);
+  const sellers: { id: string; asset: (typeof ASSETS)[number]; listingId: string; createdAt: Date; city: string }[] = [];
   for (let i = 0; i < SELLER_COUNT; i++) {
     const handle = HANDLES[i % HANDLES.length] + (i >= HANDLES.length ? `_${i}` : "");
-    const spot = jitter(lat, lng, 9); // within ~9km
+    const center = centers[i % centers.length];
+    const spot = jitter(center.lat, center.lng, 9); // within ~9km
     const a = pick(ASSETS);
     const priceValue = +(a.price + rand(-a.spread, a.spread)).toFixed(a.price < 5 ? 3 : 2);
+    const createdAt = daysAgo(randInt(20, 400));
     const seller = await prisma.user.create({
       data: {
         username: handle,
@@ -138,9 +174,10 @@ async function main() {
         sellerMode: true,
         walletAddress: fakeSolAddr(i + 1),
         walletVerified: true,
-        bio: `Trusted local ${a.asset} trader. Fast & friendly meetups.`,
+        bio: pick(BIOS).replace("{asset}", a.asset).replace("{city}", center.name),
         latitude: spot.lat,
         longitude: spot.lng,
+        createdAt,
         listings: {
           create: {
             asset: a.asset as any,
@@ -158,12 +195,58 @@ async function main() {
           },
         },
       },
+      include: { listings: { select: { id: true } } },
     });
-    created++;
-    if (created % 10 === 0) console.log(`  …${created}/${SELLER_COUNT}`);
+    sellers.push({ id: seller.id, asset: a, listingId: seller.listings[0].id, createdAt, city: center.name });
+    if ((i + 1) % 10 === 0) console.log(`  …${i + 1}/${SELLER_COUNT}`);
   }
+
+  // 4) completed-trade history with reviews, between demo accounts
+  console.log("✓ writing trade history");
+  let tradeCount = 0; let reviewCount = 0;
+  for (const s of sellers) {
+    const n = randInt(2, 14);
+    const maxAge = Math.min(90, Math.max(2, Math.floor((Date.now() - s.createdAt.getTime()) / 86400000) - 1));
+    const rows = Array.from({ length: n }, () => {
+      const buyer = pick(sellers.filter((o) => o.id !== s.id));
+      const amount = +rand(s.asset.min, Math.min(s.asset.max, s.asset.min * 20)).toFixed(s.asset.price > 100 ? 4 : 2);
+      const created = daysAgo(rand(1, maxAge));
+      return {
+        buyerId: buyer.id,
+        sellerId: s.id,
+        listingId: s.listingId,
+        asset: s.asset.asset as any,
+        amount,
+        price: +(s.asset.price + rand(-s.asset.spread, s.asset.spread)).toFixed(2),
+        paymentMethod: pick(PAYMENTS) as any,
+        tradeType: pick(["IN_PERSON", "REMOTE"]) as any,
+        chain: s.asset.chain,
+        status: "COMPLETED" as any,
+        protocolFee: 0,
+        createdAt: created,
+        updatedAt: new Date(created.getTime() + randInt(10, 120) * 60 * 1000),
+      };
+    });
+    const trades = await prisma.trade.createManyAndReturn({ data: rows, select: { id: true, buyerId: true, createdAt: true } });
+    tradeCount += trades.length;
+    const reviews = trades
+      .filter(() => Math.random() < 0.8)
+      .map((t) => ({
+        tradeId: t.id,
+        reviewerId: t.buyerId,
+        revieweeId: s.id,
+        rating: Math.random() < 0.08 ? 3 : Math.random() < 0.55 ? 5 : 4,
+        comment: Math.random() < 0.85 ? pick(COMMENTS) : null,
+        createdAt: new Date(t.createdAt.getTime() + randInt(30, 600) * 60 * 1000),
+      }));
+    if (reviews.length) {
+      await prisma.review.createMany({ data: reviews });
+      reviewCount += reviews.length;
+    }
+  }
+
   const total = await prisma.listing.count({ where: { isActive: true } });
-  console.log(`✓ done. ${created} sellers seeded. ${total} active listings now visible in discovery.`);
+  console.log(`✓ done. ${sellers.length} sellers, ${tradeCount} completed trades, ${reviewCount} reviews. ${total} active listings now visible in discovery.`);
 }
 
 main()

@@ -117,7 +117,7 @@ export default function LandingPage() {
       </header>
 
       <p className={styles.beta}>
-        Public beta. Trades settle on Solana devnet with test tokens while we complete audits.
+        Live demo. The traders you will see are sample accounts, and trades settle on Solana devnet with test tokens.
       </p>
 
       <section className={`${styles.inner} ${styles.hero}`}>
@@ -263,7 +263,7 @@ export default function LandingPage() {
             <a href="#how">How it works</a>
             <a href="#faq">FAQ</a>
           </nav>
-          <p className={styles.footerNote}>© {new Date().getFullYear()} Merlink. Public beta on Solana devnet.</p>
+          <p className={styles.footerNote}>© {new Date().getFullYear()} Merlink. Live demo on Solana devnet.</p>
         </div>
       </footer>
     </main>

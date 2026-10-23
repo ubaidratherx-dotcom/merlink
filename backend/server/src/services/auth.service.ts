@@ -139,10 +139,25 @@ async function register(data: {
     await emailService.sendVerificationEmail(user.id, data.email);
   }
 
-  const tokens = await generateTokens(user.id, user.username);
+  // Demo mode: let visitors try the whole flow without a real ID check, and give
+  // them a starting location so Discover has something to show before they allow GPS.
+  const demoUser =
+    process.env.DEMO_MODE === "true"
+      ? await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            kycStatus: "VERIFIED",
+            accountStatus: "PHONE_VERIFIED",
+            latitude: parseFloat(process.env.DEMO_DEFAULT_LAT || "25.2048"),
+            longitude: parseFloat(process.env.DEMO_DEFAULT_LNG || "55.2708"),
+          },
+        })
+      : user;
+
+  const tokens = await generateTokens(demoUser.id, demoUser.username);
 
   return {
-    user: sanitizeUser(user),
+    user: sanitizeUser(demoUser),
     ...tokens,
   };
 }

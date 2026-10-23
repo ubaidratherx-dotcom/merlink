@@ -7,7 +7,8 @@ export async function refreshListingLiquidity(): Promise<number> {
   const { prisma } = await import("./lib/prisma");
   const { listingService } = await import("./services/listing.service");
   const activeListings = await prisma.listing.findMany({
-    where: { isActive: true },
+    // demo sellers have placeholder wallets: leave their seeded liquidity alone
+    where: { isActive: true, seller: { email: { not: { endsWith: "@demo.merlink" } } } },
     select: { id: true, sellerId: true },
   });
   for (const listing of activeListings) {
