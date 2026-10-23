@@ -7,7 +7,7 @@
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
-.page h1, .page h2, .page h3 { margin: 0; letter-spacing: -0.025em; text-wrap: balance; }
+.page h1, .page h2, .page h3 { margin: 0; letter-spacing: -0.025em; text-wrap: balance; line-height: 1.15; }
 .page p { margin: 0; }
 .inner {
   max-width: 1120px;
@@ -80,7 +80,7 @@
 @media (min-width: 900px) { .hero { grid-template-columns: 1.1fr 0.9fr; padding-top: 88px; padding-bottom: 64px; gap: 56px; } }
 .heroCopy { display: grid; gap: 20px; min-width: 0; }
 .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
-.h1 { font-size: clamp(38px, 6.2vw, 66px); line-height: 1.02; font-weight: 800; letter-spacing: -0.035em; }
+.h1 { font-size: clamp(38px, 6.2vw, 66px); line-height: 1.04; font-weight: 800; letter-spacing: -0.035em; }
 .grad { background: var(--aurora-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lede { font-size: clamp(17px, 1.6vw, 19px); line-height: 1.5; color: var(--text-secondary); max-width: 50ch; }
 .ctaRow { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
